@@ -66,7 +66,7 @@ def record_realtime(class_name, sample_idx):
 
     recorder = AudioRecorder()
     recorder.start_recording(max_duration=DURATION)
-    time.sleep(DURATION)  # Record exactly 0.1 seconds
+    time.sleep(DURATION)  # Record exactly 5 seconds
     audio = recorder.stop_recording()
 
     if len(audio) == 0 or np.max(np.abs(audio)) < 0.01:  # Check for silent recordings
