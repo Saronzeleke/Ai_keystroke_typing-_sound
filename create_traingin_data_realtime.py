@@ -7,7 +7,7 @@ import time
 
 # Constants from your FastAPI backend
 SAMPLE_RATE = 44100
-DURATION = 5  # 0.1 seconds per keystroke
+DURATION = 5  # 5 seconds per keystroke
 CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ['space', 'enter', 'noise']
 TRAINING_DATA_DIR = "./training_data"  # Relative path for portability
 SAMPLES_PER_CLASS = 10  # Increase to 50 for better accuracy
