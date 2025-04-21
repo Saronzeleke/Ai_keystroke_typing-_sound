@@ -1,6 +1,9 @@
+```python
 import os
 import numpy as np
 import librosa
+import librosa.display
+import matplotlib.pyplot as plt
 from tensorflow.keras import layers, models
 from fastapi import FastAPI, File, UploadFile, Query
 from fastapi.responses import JSONResponse
@@ -11,7 +14,6 @@ from scipy import signal
 import noisereduce as nr
 import tempfile
 from fastapi.middleware.cors import CORSMiddleware
-
 from sklearn.model_selection import train_test_split
 import asyncio
 import uvicorn
@@ -60,11 +62,12 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins (adjust for production)
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 class AudioRecorder:
     def __init__(self, sample_rate=SAMPLE_RATE):
         self.sample_rate = sample_rate
@@ -201,6 +204,36 @@ class AudioPreprocessor:
             print(f"Error creating spectrogram: {e}")
             return None
 
+    @staticmethod
+    def plot_mel_spectrogram(audio, title="Mel Spectrogram", sr=SAMPLE_RATE, n_mels=N_MELS):
+        """Display mel spectrogram in the backend."""
+        try:
+            target_length = int(DURATION * sr)
+            if len(audio) < target_length:
+                audio = np.pad(audio, (0, target_length - len(audio)), mode='constant')
+            elif len(audio) > target_length:
+                audio = audio[:target_length]
+            S = librosa.feature.melspectrogram(
+                y=audio, sr=sr, n_mels=n_mels, n_fft=FFT_WINDOW, hop_length=HOP_LENGTH, fmax=8000
+            )
+            S_dB = librosa.power_to_db(S, ref=np.max)
+            target_time_steps = 87
+            if S_dB.shape[1] < target_time_steps:
+                S_dB = np.pad(S_dB, ((0, 0), (0, target_time_steps - S_dB.shape[1])), mode='constant')
+            elif S_dB.shape[1] > target_time_steps:
+                S_dB = S_dB[:, :target_time_steps]
+
+            plt.figure(figsize=(6, 4))
+            librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel', fmax=8000)
+            plt.colorbar(format='%+2.0f dB')
+            plt.title(title)
+            plt.tight_layout()
+            plt.show(block=False)
+            plt.pause(2)
+            plt.close()
+        except Exception as e:
+            print(f"Error plotting spectrogram: {e}")
+
 class KeystrokeCNN:
     def __init__(self, input_shape=EXPECTED_INPUT_SHAPE, num_classes=NUM_CLASSES):
         self.input_shape = input_shape
@@ -302,6 +335,8 @@ async def process_audio(file: UploadFile = File(...)):
             for i, ks in enumerate(keystrokes):
                 print(f"Processing keystroke {i}, length: {len(ks)} samples")
                 spectrogram = AudioPreprocessor.create_mel_spectrogram(ks)
+                # Display spectrogram in backend
+                AudioPreprocessor.plot_mel_spectrogram(ks, title=f"Keystroke {i}: {file.filename}")
                 pred_idx, confidences = model.predict(spectrogram)
                 prediction = CLASSES[pred_idx]
                 confidence = float(confidences[pred_idx])
@@ -377,6 +412,8 @@ async def stream_audio(duration: float = Query(30.0, gt=0)):
             for i, ks in enumerate(keystrokes):
                 print(f"Processing keystroke {i} in chunk, length: {len(ks)} samples")
                 spectrogram = AudioPreprocessor.create_mel_spectrogram(ks)
+                # Display spectrogram in backend
+                AudioPreprocessor.plot_mel_spectrogram(ks, title=f"Stream Keystroke {len(results) + i}")
                 pred_idx, confidences = model.predict(spectrogram)
                 prediction = CLASSES[pred_idx]
                 confidence = float(confidences[pred_idx])
@@ -456,6 +493,21 @@ async def train_model():
         X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
         print(f"Training samples: {len(X_train)}, Validation samples: {len(X_val)}")
         
+        # Display spectrograms for one sample per class
+        for label in CLASSES:
+            label_dir = os.path.join(TRAINING_DATA_DIR, label)
+            if not os.path.isdir(label_dir):
+                continue
+            for file in os.listdir(label_dir):
+                if file.endswith('.wav'):
+                    file_path = os.path.join(label_dir, file)
+                    audio = AudioPreprocessor.load_audio(file_path)
+                    audio = AudioPreprocessor.reduce_noise(audio)
+                    keystroke = AudioPreprocessor.extract_keystroke(audio)
+                    if keystroke is not None:
+                        AudioPreprocessor.plot_mel_spectrogram(keystroke, title=f"Training Sample: {label}")
+                    break  # Only one sample per class
+        
         with model_lock:
             model = KeystrokeCNN(input_shape=EXPECTED_INPUT_SHAPE)
             history = model.train(X_train, y_train, X_val, y_val, epochs=50, batch_size=32)
@@ -518,3 +570,4 @@ def prepare_training_data(data_dir):
 if __name__ == "__main__":
     print("Starting server...")
     uvicorn.run(app, host="0.0.0.0", port=8000)
+print("Server stopped!")
