@@ -1,4 +1,4 @@
-import os
+
 import numpy as np
 import librosa
 import librosa.display
@@ -19,6 +19,7 @@ import uvicorn
 import time
 from threading import Lock
 import traceback
+import os
 
 # Constants
 SAMPLE_RATE = 44100
