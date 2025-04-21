@@ -58,7 +58,7 @@ def record_realtime(class_name, sample_idx):
     # Record a 5-second live audio sample in real-time via AudioRelay.
     print(f"\nRecording sample {sample_idx + 1}/{SAMPLES_PER_CLASS} for class '{class_name}'...")
     if class_name == "noise":
-        print("Make a noise (e.g., rustle paper, tap table) in 2 seconds...")
+        print("Make a noise (e.g., rustle paper, human voice, walking) in 2 seconds...")
     else:
         print(f"Press the '{class_name}' key in 2 seconds...")
     time.sleep(2)  # Allow time to prepare
