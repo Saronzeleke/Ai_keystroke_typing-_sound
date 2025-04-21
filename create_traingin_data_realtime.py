@@ -82,8 +82,8 @@ def record_realtime(class_name, sample_idx):
     return filepath
 
 def main():
-    """Create training data with real-time live recordings for each class."""
-    print("Ensure AudioRelay is set up (phone mic → PC Virtual Mic).")
+    # Create training data with real-time live recordings for each class.
+ 
     print("Place your phone 10-20 cm from the keyboard for clear recordings.")
     create_directory_structure()
     total_samples = 0
