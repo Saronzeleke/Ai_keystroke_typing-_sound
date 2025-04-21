@@ -31,7 +31,7 @@ CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ['spa
 NUM_CLASSES = len(CLASSES)
 EXPECTED_INPUT_SHAPE = (N_MELS, 87, 1)
 TRAINING_DATA_DIR = r"C:\Users\USER\Desktop\Ai keystroke\training_data"
-MODEL_PATH = r"C:\Users\USER\Desktop\Ai keystroke\model\keystroke_model.h5"
+MODEL_PATH = r"C:\Users\USER\Desktop\Ai keystroke\keystroke_model.h5"
 
 # Global model variable with lock
 model = None
