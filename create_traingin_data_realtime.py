@@ -67,7 +67,7 @@ def record_realtime(class_name, sample_idx):
     recorder.start_recording(max_duration=DURATION)
     time.sleep(DURATION)  
     audio = recorder.stop_recording()
-bbbb# Check for silent recordings
+     # Check for silent recordings
     if len(audio) == 0 or np.max(np.abs(audio)) < 0.01:  
         print(f"Warning: No audio or too quiet for {class_name}, sample {sample_idx}")
         return None
