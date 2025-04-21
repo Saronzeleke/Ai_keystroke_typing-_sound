@@ -11,7 +11,6 @@ CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ['spa
 TRAINING_DATA_DIR = "./training_data"  
 SAMPLES_PER_CLASS = 10  
 
-# AudioRecorder class (copied from your backend for real-time recording)
 class AudioRecorder:
     def __init__(self, sample_rate=SAMPLE_RATE):
         self.sample_rate = sample_rate
