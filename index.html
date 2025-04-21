@@ -1,269 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Keystroke Recognition UI</title>
- 
-  <script src="https://cdn.tailwindcss.com"></script>
- 
-  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/babel-standalone@7.24.7/babel.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keystroke Recognition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body.light-theme {
+            background-color: #ffffff;
+            color: #000000;
+        }
+        body.dark-theme {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        #processResults li, #streamResults li {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-  <div id="root"></div>
+<body class="light-theme min-h-screen flex flex-col items-center justify-center p-4">
+    <button id="themeToggle" class="fixed top-4 right-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700" onclick="toggleTheme()">
+        <i id="themeIcon" class="fas fa-sun text-yellow-500"></i>
+    </button>
+    <h1 class="text-3xl font-bold mb-6">Keystroke Recognition System</h1>
 
-  <script type="text/babel">
-    const { useState, useEffect } = React;
+    <div id="recordAudio" class="mb-6">
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="recordAudio()">Record Audio (5s)</button>
+        <p id="recordStatus" class="mt-2"></p>
+    </div>
 
-    // Main App Component
-    const App = () => {
-      const [recording, setRecording] = useState(false);
-      const [streaming, setStreaming] = useState(false);
-      const [recordResult, setRecordResult] = useState(null);
-      const [processResult, setProcessResult] = useState(null);
-      const [streamResults, setStreamResults] = useState([]);
-      const [trainResult, setTrainResult] = useState(null);
-      const [error, setError] = useState(null);
-      const [file, setFile] = useState(null);
+    <div id="processAudio" class="mb-6">
+        <input type="file" id="audioFile" accept="audio/*" class="mb-2">
+        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="processAudio()">Process Audio</button>
+        <div id="processResults" class="mt-4"></div>
+    </div>
 
-      // Handle Record Audio
-      const handleRecord = async () => {
-        setRecording(true);
-        setError(null);
-        setRecordResult(null);
-        try {
-          const response = await fetch('http://localhost:8000/record/?duration=5', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          });
-          const data = await response.json();
-          if (response.ok) {
-            setRecordResult(data);
-          } else {
-            setError(data.error || 'Recording failed');
-          }
-        } catch (err) {
-          setError('Failed to connect to server');
-        } finally {
-          setRecording(false);
-        }
-      };
+    <div id="streamAudio" class="mb-6">
+        <button class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded" onclick="startStreaming()">Start Streaming (30s)</button>
+        <div id="streamResults" class="mt-4"></div>
+    </div>
 
-      // Handle File Upload and Process
-      const handleFileUpload = async () => {
-        if (!file) {
-          setError('Please select a WAV file');
-          return;
-        }
-        setError(null);
-        setProcessResult(null);
-        const formData = new FormData();
-        formData.append('file', file);
-        try {
-          const response = await fetch('http://localhost:8000/process/', {
-            method: 'POST',
-            body: formData,
-          });
-          const data = await response.json();
-          if (response.ok) {
-            setProcessResult(data);
-          } else {
-            setError(data.error || 'Processing failed');
-          }
-        } catch (err) {
-          setError('Failed to connect to server');
-        }
-      };
+    <div id="trainModel" class="mb-6">
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="trainModel()">Train Model</button>
+        <p id="trainStatus" class="mt-2"></p>
+    </div>
 
-      // Handle Stream Audio
-      const handleStream = async () => {
-        if (streaming) {
-          setStreaming(false);
-          return;
-        }
-        setStreaming(true);
-        setError(null);
-        setStreamResults([]);
-        try {
-          const response = await fetch('http://localhost:8000/stream/?duration=30', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          });
-          const data = await response.json();
-          if (response.ok) {
-            setStreamResults(data.keystrokes || []);
-            if (data.summary) {
-              setStreamResults((prev) => [
-                ...prev,
-                { summary: data.summary },
-              ]);
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('themeIcon');
+            if (body.classList.contains('light-theme')) {
+                body.classList.replace('light-theme', 'dark-theme');
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+                themeIcon.classList.replace('text-yellow-500', 'text-gray-300');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.replace('dark-theme', 'light-theme');
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+                themeIcon.classList.replace('text-gray-300', 'text-yellow-500');
+                localStorage.setItem('theme', 'light');
             }
-          } else {
-            setError(data.error || 'Streaming failed');
-          }
-        } catch (err) {
-          setError('Failed to connect to server');
-        } finally {
-          setStreaming(false);
         }
-      };
 
-      // Handle Train Model
-      const handleTrain = async () => {
-        setError(null);
-        setTrainResult(null);
-        try {
-          const response = await fetch('http://localhost:8000/train/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          });
-          const data = await response.json();
-          if (response.ok) {
-            setTrainResult(data);
-          } else {
-            setError(data.error || 'Training failed');
-          }
-        } catch (err) {
-          setError('Failed to connect to server');
+        // Load saved theme
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const body = document.body;
+            const themeIcon = document.getElementById('themeToggle').querySelector('i');
+            if (savedTheme === 'dark') {
+                body.classList.replace('light-theme', 'dark-theme');
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+                themeIcon.classList.replace('text-yellow-500', 'text-gray-300');
+            }
+        });
+
+        async function recordAudio() {
+            document.getElementById('recordStatus').innerText = 'Recording...';
+            try {
+                const response = await fetch('http://localhost:8000/record/?duration=5', { method: 'POST' });
+                const result = await response.json();
+                if (result.error) {
+                    document.getElementById('recordStatus').innerText = `Error: ${result.error}`;
+                } else {
+                    document.getElementById('recordStatus').innerText = `Audio recorded: ${result.filename}`;
+                }
+            } catch (error) {
+                console.error('Error recording audio:', error);
+                document.getElementById('recordStatus').innerText = 'Error recording audio';
+            }
         }
-      };
 
-      // Render Keystroke Results
-      const renderKeystrokes = (keystrokes) => {
-        if (!keystrokes || keystrokes.length === 0) return null;
-        return (
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold">Keystrokes Detected:</h3>
-            <ul className="mt-2 space-y-2 max-h-64 overflow-y-auto">
-              {keystrokes.map((ks, index) => (
-                ks.summary ? (
-                  <li key={index} className="bg-gray-200 p-2 rounded">
-                    <strong>Summary:</strong> {ks.summary.characters} chars, {ks.summary.spaces} spaces, {ks.summary.enters} enters, {ks.summary.numbers} numbers
-                  </li>
-                ) : (
-                  <li key={index} className={`p-2 rounded ${ks.is_low_confidence ? 'bg-yellow-100' : 'bg-green-100'}`}>
-                    Keystroke {ks.keystroke}: <strong>{ks.prediction}</strong> (Confidence: {(ks.confidence * 100).toFixed(2)}%)
-                  </li>
-                )
-              ))}
-            </ul>
-          </div>
-        );
-      };
+        async function processAudio() {
+            const fileInput = document.getElementById('audioFile');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select an audio file');
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const response = await fetch('http://localhost:8000/process/', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                displayResults(result, 'processResults');
+            } catch (error) {
+                console.error('Error processing audio:', error);
+                document.getElementById('processResults').innerText = 'Error processing audio';
+            }
+        }
 
-      // Render Summary
-      const renderSummary = (summary) => {
-        if (!summary) return null;
-        return (
-          <div className="mt-4 bg-blue-100 p-4 rounded">
-            <h3 className="text-lg font-semibold">Summary:</h3>
-            <p>Characters: {summary.characters}</p>
-            <p>Spaces: {summary.spaces}</p>
-            <p>Enters: {summary.enters}</p>
-            <p>Numbers: {summary.numbers}</p>
-          </div>
-        );
-      };
+        async function startStreaming() {
+            try {
+                const response = await fetch('http://localhost:8000/stream/?duration=30', { method: 'POST' });
+                const result = await response.json();
+                displayResults(result, 'streamResults');
+            } catch (error) {
+                console.error('Error streaming audio:', error);
+                document.getElementById('streamResults').innerText = 'Error streaming audio';
+            }
+        }
 
-      return (
-        <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
-          <h1 className="text-2xl font-bold mb-4 text-center">Keystroke Recognition System</h1>
-          
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
-              {error}
-            </div>
-          )}
+        async function trainModel() {
+            document.getElementById('trainStatus').innerText = 'Training model...';
+            try {
+                const response = await fetch('http://localhost:8000/train/', { method: 'POST' });
+                const result = await response.json();
+                if (result.error) {
+                    document.getElementById('trainStatus').innerText = `Error: ${result.error}`;
+                } else {
+                    document.getElementById('trainStatus').innerText = 'Model trained successfully';
+                }
+            } catch (error) {
+                console.error('Error training model:', error);
+                document.getElementById('trainStatus').innerText = 'Error training model';
+            }
+        }
 
-          {/* Record Audio */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Record Audio</h2>
-            <button
-              onClick={handleRecord}
-              disabled={recording}
-              className={`w-full py-2 px-4 rounded text-white ${
-                recording ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
-              }`}
-            >
-              {recording ? 'Recording...' : 'Record (5s)'}
-            </button>
-            {recordResult && (
-              <div className="mt-2 bg-gray-100 p-2 rounded">
-                Recorded file: {recordResult.filename}
-              </div>
-            )}
-          </div>
-
-          {/* Upload and Process Audio */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Upload Audio</h2>
-            <input
-              type="file"
-              accept=".wav"
-              onChange={(e) => setFile(e.target.files[0])}
-              className="mb-2 w-full"
-            />
-            <button
-              onClick={handleFileUpload}
-              disabled={!file}
-              className={`w-full py-2 px-4 rounded text-white ${
-                !file ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'
-              }`}
-            >
-              Process Audio
-            </button>
-            {processResult && (
-              <div className="mt-4">
-                {renderKeystrokes(processResult.keystrokes)}
-                {renderSummary(processResult.summary)}
-              </div>
-            )}
-          </div>
-
-          {/* Stream Audio */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Stream Audio</h2>
-            <button
-              onClick={handleStream}
-              className={`w-full py-2 px-4 rounded text-white ${
-                streaming ? 'bg-red-500 hover:bg-red-600' : 'bg-purple-500 hover:bg-purple-600'
-              }`}
-            >
-              {streaming ? 'Stop Streaming' : 'Start Streaming (30s)'}
-            </button>
-            {renderKeystrokes(streamResults)}
-          </div>
-
-          {/* Train Model */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Train Model</h2>
-            <button
-              onClick={handleTrain}
-              className="w-full py-2 px-4 rounded bg-orange-500 hover:bg-orange-600 text-white"
-            >
-              Train Model
-            </button>
-            {trainResult && (
-              <div className="mt-4 bg-gray-100 p-4 rounded">
-                <p>{trainResult.message}</p>
-                <p>Final Accuracy: {(trainResult.history?.accuracy?.slice(-1)[0] * 100 || 0).toFixed(2)}%</p>
-                <p>Final Validation Accuracy: {(trainResult.history?.val_accuracy?.slice(-1)[0] * 100 || 0).toFixed(2)}%</p>
-              </div>
-            )}
-          </div>
-
-          <p className="text-center text-gray-600 mt-4">
-            Built with React & Tailwind CSS for Cybersecurity Competition
-          </p>
-        </div>
-      );
-    };
-
-    // Render App
-    ReactDOM.render(<App />, document.getElementById('root'));
-  </script>
+        function displayResults(data, elementId) {
+            const resultsDiv = document.getElementById(elementId);
+            resultsDiv.innerHTML = '';
+            if (data.error) {
+                resultsDiv.innerText = `Error: ${data.error}`;
+                return;
+            }
+            if (data.keystrokes && data.keystrokes.length > 0) {
+                const ul = document.createElement('ul');
+                data.keystrokes.forEach(ks => {
+                    const li = document.createElement('li');
+                    li.innerText = `Keystroke ${ks.keystroke}: ${ks.prediction} (Confidence: ${ks.confidence.toFixed(2)})`;
+                    li.style.backgroundColor = ks.is_low_confidence ? 'yellow' : 'lightgreen';
+                    ul.appendChild(li);
+                });
+                resultsDiv.appendChild(ul);
+            }
+            const summary = document.createElement('p');
+            summary.innerText = `Summary: Characters: ${data.summary.characters}, Spaces: ${data.summary.spaces}, Enters: ${data.summary.enters}, Numbers: ${data.summary.numbers}`;
+            resultsDiv.appendChild(summary);
+        }
+    </script>
 </body>
 </html>
