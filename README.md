@@ -11,7 +11,7 @@ Anomaly detection for potential tampering (e.g., >5 high-confidence noise predic
 Web interface with file upload, streaming, and training capabilities.
 Unit and integration tests for reliability.
 
-#Prerequisites
+# Prerequisites
 Software:
 
 Python 3.8+
@@ -40,7 +40,7 @@ scikit-learn==1.2.2
 pytest
 websocket-client
 
-#Setup Instructions:
+# Setup Instructions:
 
 Place Files:Ensure the following files are in C:\Users\USER\Desktop\Ai keystroke:
 
@@ -51,18 +51,18 @@ requirements.txt
 test_keystroke_app.py
 
 
-#Set Up Virtual Environment:
+# Set Up Virtual Environment:
 cd C:\Users\USER\Desktop\Ai keystroke
 python -m venv venv
 .\venv\Scripts\activate
 
 
-#Install Dependencies:
+# Install Dependencies:
 pip install -r requirements.txt
 pip install pytest websocket-client
 
 
-#Configure DroidCam:
+# Configure DroidCam:
 
 Install DroidCam on PC and phone (DroidCam website).
 Set DroidCam as default microphone:
@@ -76,7 +76,7 @@ Test audio:python -c "import sounddevice as sd; print(sd.query_devices())"
 
 
 How to Run
-#Step 1: Generate Training Data
+# Step 1: Generate Training Data
 
 Script: create_training_data_corrected.py
 Purpose: Records 10 audio samples (0.1s each) for 38 classes, saving WAVs in training_data/.
@@ -95,7 +95,7 @@ Should show 38 folders with 10 WAVs each.
 
 
 
-#Step 2: Run the Main Application
+# Step 2: Run the Main Application
 
 Script: keystroke_app_with_spectrogram.py
 Purpose: Hosts FastAPI server for training, prediction, and spectrogram display.
@@ -112,7 +112,7 @@ Endpoints:
 
 
 
-#Step 3: Access the Frontend
+# Step 3: Access the Frontend
 
 File: index.html
 Purpose: Provides UI for recording, processing, streaming, and training.
