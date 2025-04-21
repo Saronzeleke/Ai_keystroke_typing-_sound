@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,6 +20,17 @@
             margin: 5px 0;
             padding: 5px;
             border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+        #processResults img, #streamResults img {
+            width: 150px;
+            margin-left: 10px;
+        }
+        .alert {
+            background-color: red;
+            color: white;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -66,7 +78,6 @@
             }
         }
 
-        // Load saved theme
         document.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('theme') || 'light';
             const body = document.body;
@@ -104,27 +115,134 @@
             const formData = new FormData();
             formData.append('file', file);
             try {
+                document.getElementById('processResults').innerText = 'Processing...';
                 const response = await fetch('http://localhost:8000/process/', {
                     method: 'POST',
                     body: formData
                 });
                 const result = await response.json();
-                displayResults(result, 'processResults');
+                displayResults(result, 'processResults', 'process');
             } catch (error) {
                 console.error('Error processing audio:', error);
                 document.getElementById('processResults').innerText = 'Error processing audio';
             }
         }
 
-        async function startStreaming() {
-            try {
-                const response = await fetch('http://localhost:8000/stream/?duration=30', { method: 'POST' });
-                const result = await response.json();
-                displayResults(result, 'streamResults');
-            } catch (error) {
-                console.error('Error streaming audio:', error);
-                document.getElementById('streamResults').innerText = 'Error streaming audio';
+        function startStreaming() {
+            const ws = new WebSocket('ws://localhost:8000/ws/stream');
+            const resultsDiv = document.getElementById('streamResults');
+            resultsDiv.innerHTML = '<p>Streaming...</p>';
+            let results = [];
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.error) {
+                    resultsDiv.innerText = `Error: ${data.error}`;
+                    return;
+                }
+                if (data.keystroke !== undefined) {
+                    results.push(data);
+                    displayLiveResult(data, 'streamResults', 'ws_stream');
+                } else if (data.summary) {
+                    if (data.keystrokes) {
+                        results = data.keystrokes;
+                        displayResults(data, 'streamResults', 'ws_stream');
+                    } else {
+                        displayLiveResult(data, 'streamResults', 'ws_stream');
+                    }
+                } else if (data.alert) {
+                    displayAlert(data, 'streamResults');
+                }
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket closed');
+                resultsDiv.innerHTML += '<p>Stream ended.</p>';
+                displayResults({
+                    keystrokes: results,
+                    summary: calculateSummary(results)
+                }, 'streamResults', 'ws_stream');
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                resultsDiv.innerText = 'WebSocket error occurred';
+            };
+        }
+
+        function displayLiveResult(data, elementId, source) {
+            const resultsDiv = document.getElementById(elementId);
+            let ul = resultsDiv.querySelector('ul');
+            if (!ul) {
+                ul = document.createElement('ul');
+                resultsDiv.appendChild(ul);
             }
+            if (data.keystroke !== undefined) {
+                const li = document.createElement('li');
+                li.innerText = `Keystroke ${data.keystroke}: ${data.prediction} (Confidence: ${data.confidence.toFixed(2)})`;
+                li.style.backgroundColor = data.is_low_confidence ? 'yellow' : 'lightgreen';
+                const img = document.createElement('img');
+                img.src = `http://localhost:8000/spectrogram/${source}/${data.keystroke}`;
+                img.alt = `Spectrogram ${data.keystroke}`;
+                li.appendChild(img);
+                ul.appendChild(li);
+            }
+        }
+
+        function displayAlert(data, elementId) {
+            const resultsDiv = document.getElementById(elementId);
+            const alert = document.createElement('p');
+            alert.innerText = data.alert;
+            alert.className = 'alert';
+            resultsDiv.appendChild(alert);
+        }
+
+        function displayResults(data, elementId, source) {
+            const resultsDiv = document.getElementById(elementId);
+            resultsDiv.innerHTML = '';
+            if (data.error) {
+                resultsDiv.innerText = `Error: ${data.error}`;
+                return;
+            }
+            if (data.keystrokes && data.keystrokes.length > 0) {
+                const ul = document.createElement('ul');
+                data.keystrokes.forEach(ks => {
+                    const li = document.createElement('li');
+                    if (ks.alert) {
+                        li.innerText = ks.alert;
+                        li.className = 'alert';
+                    } else {
+                        li.innerText = `Keystroke ${ks.keystroke}: ${ks.prediction} (Confidence: ${ks.confidence.toFixed(2)})`;
+                        li.style.backgroundColor = ks.is_low_confidence ? 'yellow' : 'lightgreen';
+                        const img = document.createElement('img');
+                        img.src = `http://localhost:8000/spectrogram/${source}/${ks.keystroke}`;
+                        img.alt = `Spectrogram ${ks.keystroke}`;
+                        li.appendChild(img);
+                    }
+                    ul.appendChild(li);
+                });
+                resultsDiv.appendChild(ul);
+            }
+            const summary = document.createElement('p');
+            summary.innerText = `Summary: Characters: ${data.summary.characters}, Spaces: ${data.summary.spaces}, Enters: ${data.summary.enters}, Numbers: ${data.summary.numbers}`;
+            resultsDiv.appendChild(summary);
+        }
+
+        function calculateSummary(keystrokes) {
+            const char_count = keystrokes.filter(r => !['noise', 'space', 'enter'].includes(r.prediction)).length;
+            const space_count = keystrokes.filter(r => r.prediction === 'space').length;
+            const enter_count = keystrokes.filter(r => r.prediction === 'enter').length;
+            const number_count = keystrokes.filter(r => r.prediction.match(/^\d$/)).length;
+            return {
+                characters: char_count,
+                spaces: space_count,
+                enters: enter_count,
+                numbers: number_count
+            };
         }
 
         async function trainModel() {
@@ -142,28 +260,7 @@
                 document.getElementById('trainStatus').innerText = 'Error training model';
             }
         }
-
-        function displayResults(data, elementId) {
-            const resultsDiv = document.getElementById(elementId);
-            resultsDiv.innerHTML = '';
-            if (data.error) {
-                resultsDiv.innerText = `Error: ${data.error}`;
-                return;
-            }
-            if (data.keystrokes && data.keystrokes.length > 0) {
-                const ul = document.createElement('ul');
-                data.keystrokes.forEach(ks => {
-                    const li = document.createElement('li');
-                    li.innerText = `Keystroke ${ks.keystroke}: ${ks.prediction} (Confidence: ${ks.confidence.toFixed(2)})`;
-                    li.style.backgroundColor = ks.is_low_confidence ? 'yellow' : 'lightgreen';
-                    ul.appendChild(li);
-                });
-                resultsDiv.appendChild(ul);
-            }
-            const summary = document.createElement('p');
-            summary.innerText = `Summary: Characters: ${data.summary.characters}, Spaces: ${data.summary.spaces}, Enters: ${data.summary.enters}, Numbers: ${data.summary.numbers}`;
-            resultsDiv.appendChild(summary);
-        }
     </script>
 </body>
 </html>
+```
