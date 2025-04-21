@@ -48,7 +48,7 @@ class AudioRecorder:
         return np.concatenate(self.recording).flatten() if self.recording else np.array([])
 
 def create_directory_structure():
-    """Create training_data directory with subdirectories for each class."""
+    
     os.makedirs(TRAINING_DATA_DIR, exist_ok=True)
     for class_name in CLASSES:
         class_dir = os.path.join(TRAINING_DATA_DIR, class_name)
