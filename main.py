@@ -206,7 +206,7 @@ class AudioPreprocessor:
 
     @staticmethod
     def plot_mel_spectrogram(audio, title="Mel Spectrogram", sr=SAMPLE_RATE, n_mels=N_MELS):
-        """Display mel spectrogram in the backend."""
+        
         try:
             target_length = int(DURATION * sr)
             if len(audio) < target_length:
@@ -277,7 +277,7 @@ class KeystrokeCNN:
     def load_model(self, filepath):
         self.model = models.load_model(filepath)
         self.model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-        self.model.predict(np.zeros((1, *self.input_shape)))  # Warm-up to build metrics
+        self.model.predict(np.zeros((1, *self.input_shape)))  # Warm-up to build metrics 
 
     def predict(self, spectrogram):
         try:
