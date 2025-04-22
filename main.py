@@ -21,7 +21,7 @@ from threading import Lock
 import traceback
 import os
 
-# Constants
+
 SAMPLE_RATE = 44100
 DURATION = 0.1
 N_MELS = 128
