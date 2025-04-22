@@ -33,7 +33,7 @@ EXPECTED_INPUT_SHAPE = (N_MELS, 87, 1)
 TRAINING_DATA_DIR = r"C:\Users\USER\Desktop\AI_KEYSTORKE_TYPING_SOUND\training_data"
 MODEL_PATH = r"C:\Users\USER\Desktop\AI_KEYSTORKE_TYPING_SOUND\keystroke_model.h5"
 
-# Global model variable with lock
+
 model = None
 model_lock = Lock()
 
@@ -277,7 +277,7 @@ class KeystrokeCNN:
     def load_model(self, filepath):
         self.model = models.load_model(filepath)
         self.model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-        self.model.predict(np.zeros((1, *self.input_shape)))  # Warm-up to build metrics 
+        self.model.predict(np.zeros((1, *self.input_shape)))   
 
     def predict(self, spectrogram):
         try:
