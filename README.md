@@ -61,9 +61,6 @@ Saves samples under training_data/
   python -m http.server 8080
 then when it start type http://localhost:8080/index.html
 in your defualt browser
-
-Interact with the app via browser
-
 Upload audio, view predictions, see spectrograms
 
  # 🧪 Testing
