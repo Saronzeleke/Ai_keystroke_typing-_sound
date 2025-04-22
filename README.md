@@ -22,9 +22,9 @@ A deep learning-based system that predicts keystrokes from audio using mel spect
 - Microphone (e.g., DroidCam)
 - Windows 10/11 with 8GB+ RAM
 
-## 📦 Setup
+# 📦 Setup
 
-1. **Clone the repo**
+#. **Clone the repo**
    ```bash
    git clone https://github.com/Saronzeleke/Ai_keystroke_typing-_sound.git
    cd Ai_keystroke_typing-_sound
@@ -36,7 +36,7 @@ pip install -r requiremnt.txt
 4. (Optional) Configure DroidCam
    * Install on PC and phone
 
- * Set "DroidCam Virtual Audio" as default mic
+ # Set "DroidCam Virtual Audio" as default mic
  #  🎙️ Usage
 Step 1: Generate Training Data
 python create_traingin_data_realtime.py
@@ -44,9 +44,9 @@ Prompts you to record each key.
 
 Saves samples under training_data/
 
-Step 2: Run the App
-python main.py
-Starts a FastAPI server with endpoints for:
+ # Step 2: Run the App
+  python main.py
+  Starts a FastAPI server with endpoints for:
 
   * /record/
 
@@ -57,7 +57,11 @@ Starts a FastAPI server with endpoints for:
   * /ws/stream (WebSocket)
 
   *   /train/ (model training)
-Step 3: Open index.html
+ # Step 3: Open index.html
+  python -m http.server 8080
+then when it start type http://localhost:8080/index.html
+in your defualt browser
+
 Interact with the app via browser
 
 Upload audio, view predictions, see spectrograms
