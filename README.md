@@ -37,7 +37,7 @@ pip install -r requiremnt.txt
    * Install on PC and phone
 
  * Set "DroidCam Virtual Audio" as default mic
-   🎙️ Usage
+ #  🎙️ Usage
 Step 1: Generate Training Data
 python create_traingin_data_realtime.py
 Prompts you to record each key.
@@ -48,23 +48,23 @@ Step 2: Run the App
 python main.py
 Starts a FastAPI server with endpoints for:
 
-*/record/
+  * /record/
 
-*/process/
+  *  /process/
 
-*/stream/
+  *  /stream/
 
-*/ws/stream (WebSocket)
+  * /ws/stream (WebSocket)
 
-*/train/ (model training)
+  *   /train/ (model training)
 Step 3: Open index.html
 Interact with the app via browser
 
 Upload audio, view predictions, see spectrograms
 
-🧪 Testing
+ # 🧪 Testing
 pytest
-   📂 File Structure
+  # 📂 File Structure
 create_traingin_data_realtime.py: Data collection
 
 main.py: FastAPI backend
