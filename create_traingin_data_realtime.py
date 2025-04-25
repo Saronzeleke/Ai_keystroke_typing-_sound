@@ -20,7 +20,7 @@ class AudioRecorder:
 
     def start_recording(self, max_duration=10):
         self.recording = []
-        self.is_recording = True
+        self.is_recording = True 
         start_time = time.time()
 
         def callback(indata, frames, time, status):
