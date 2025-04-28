@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,59 +9,176 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body.light-theme {
-            background-color: #ffffff;
-            color: #000000;
+            background-color: #f8fafc;
+            color: #1e293b;
         }
         body.dark-theme {
-            background-color: #000000;
-            color: #ffffff;
+            background-color: #0f172a;
+            color: #e2e8f0;
         }
-        #processResults li, #streamResults li {
-            margin: 5px 0;
-            padding: 5px;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
+        .keystroke-card {
+            transition: all 0.3s ease;
         }
-        #processResults img, #streamResults img {
-            width: 150px;
-            margin-left: 10px;
+        .keystroke-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-        .alert {
-            background-color: red;
-            color: white;
-            font-weight: bold;
+        .confidence-bar {
+            height: 8px;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .spectrogram-container {
+            height: 100px;
+            background-color: #f1f5f9;
+            border-radius: 0.375rem;
+        }
+        .dark-theme .spectrogram-container {
+            background-color: #1e293b;
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
     </style>
 </head>
-<body class="light-theme min-h-screen flex flex-col items-center justify-center p-4">
-    <button id="themeToggle" class="fixed top-4 right-4 p-2 rounded-full bg-gray-200 dark:bg-gray-700" onclick="toggleTheme()">
-        <i id="themeIcon" class="fas fa-sun text-yellow-500"></i>
-    </button>
-    <h1 class="text-3xl font-bold mb-6">Keystroke Recognition System</h1>
+<body class="light-theme min-h-screen p-4">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                <i class="fas fa-keyboard mr-2"></i>Keystroke Recognition
+            </h1>
+            <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition" onclick="toggleTheme()">
+                <i id="themeIcon" class="fas fa-sun text-yellow-500"></i>
+            </button>
+        </header>
 
-    <div id="recordAudio" class="mb-6">
-        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="recordAudio()">Record Audio (5s)</button>
-        <p id="recordStatus" class="mt-2"></p>
-    </div>
-
-    <div id="processAudio" class="mb-6">
-        <input type="file" id="audioFile" accept="audio/*" class="mb-2">
-        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="processAudio()">Process Audio</button>
-        <div id="processResults" class="mt-4"></div>
-    </div>
-
-    <div id="streamAudio" class="mb-6">
-        <button class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded" onclick="startStreaming()">Start Streaming (30s)</button>
-        <div id="streamResults" class="mt-4"></div>
-    </div>
-
-    <div id="trainModel" class="mb-6">
-        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="trainModel()">Train Model</button>
-        <p id="trainStatus" class="mt-2"></p>
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Control Panel -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
+                    <i class="fas fa-sliders-h mr-2"></i>Control Panel
+                </h2>
+                
+                <!-- Record Section -->
+                <div class="mb-6 p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                    <h3 class="font-medium mb-2 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-microphone mr-2"></i>Record Audio
+                    </h3>
+                    <div class="flex items-center space-x-3">
+                        <button id="recordBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-full transition flex items-center" onclick="recordAudio()">
+                            <i class="fas fa-circle mr-2"></i>Record
+                        </button>
+                        <div id="recordTimer" class="text-gray-600 dark:text-gray-400 font-mono hidden">
+                            00:05
+                        </div>
+                    </div>
+                    <div id="recordStatus" class="mt-2 text-sm text-gray-600 dark:text-gray-400"></div>
+                </div>
+                
+                <!-- Process Section -->
+                <div class="mb-6 p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                    <h3 class="font-medium mb-2 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-cogs mr-2"></i>Process Audio
+                    </h3>
+                    <div class="flex items-center space-x-3">
+                        <label for="audioFile" class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-full transition flex items-center">
+                            <i class="fas fa-file-audio mr-2"></i>Choose File
+                            <input type="file" id="audioFile" accept="audio/*" class="hidden">
+                        </label>
+                        <button id="processBtn" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-full transition flex items-center" onclick="processAudio()" disabled>
+                            <i class="fas fa-play mr-2"></i>Process
+                        </button>
+                    </div>
+                    <div id="fileInfo" class="mt-2 text-sm text-gray-600 dark:text-gray-400"></div>
+                </div>
+                
+                <!-- Stream Section -->
+                <div class="mb-6 p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                    <h3 class="font-medium mb-2 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-stream mr-2"></i>Real-time Stream
+                    </h3>
+                    <div class="flex items-center space-x-3">
+                        <button id="streamBtn" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-full transition flex items-center" onclick="toggleStreaming()">
+                            <i class="fas fa-play mr-2"></i>Start Stream
+                        </button>
+                        <div id="streamTimer" class="text-gray-600 dark:text-gray-400 font-mono hidden">
+                            00:30
+                        </div>
+                    </div>
+                    <div id="streamStatus" class="mt-2 text-sm text-gray-600 dark:text-gray-400"></div>
+                </div>
+                
+                <!-- Train Section -->
+                <div class="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                    <h3 class="font-medium mb-2 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-brain mr-2"></i>Model Training
+                    </h3>
+                    <button id="trainBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-4 rounded-full transition flex items-center" onclick="trainModel()">
+                        <i class="fas fa-cogs mr-2"></i>Train Model
+                    </button>
+                    <div id="trainStatus" class="mt-2 text-sm text-gray-600 dark:text-gray-400"></div>
+                    <div id="trainProgress" class="w-full bg-gray-200 dark:bg-slate-600 rounded-full h-2.5 mt-2 hidden">
+                        <div id="trainProgressBar" class="bg-orange-500 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results Panel -->
+            <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
+                    <i class="fas fa-chart-bar mr-2"></i>Results
+                </h2>
+                
+                <!-- Summary Card -->
+                <div class="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 mb-6">
+                    <h3 class="font-medium mb-3 text-blue-800 dark:text-blue-200">
+                        <i class="fas fa-clipboard-list mr-2"></i>Summary
+                    </h3>
+                    <div id="summaryContent" class="grid grid-cols-2 gap-3">
+                        <div class="bg-white dark:bg-slate-700 p-3 rounded-lg shadow-sm">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Characters</div>
+                            <div id="charCount" class="text-2xl font-bold text-blue-600 dark:text-blue-400">0</div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-700 p-3 rounded-lg shadow-sm">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Numbers</div>
+                            <div id="numCount" class="text-2xl font-bold text-green-600 dark:text-green-400">0</div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-700 p-3 rounded-lg shadow-sm">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Spaces</div>
+                            <div id="spaceCount" class="text-2xl font-bold text-purple-600 dark:text-purple-400">0</div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-700 p-3 rounded-lg shadow-sm">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Enters</div>
+                            <div id="enterCount" class="text-2xl font-bold text-red-600 dark:text-red-400">0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Keystrokes List -->
+                <div>
+                    <h3 class="font-medium mb-3 text-gray-700 dark:text-gray-300">
+                        <i class="fas fa-keyboard mr-2"></i>Detected Keystrokes
+                    </h3>
+                    <div id="keystrokesList" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                        <div class="text-center py-10 text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-keyboard text-4xl mb-2"></i>
+                            <p>No keystrokes detected yet</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
+        // Theme Management
         function toggleTheme() {
             const body = document.body;
             const themeIcon = document.getElementById('themeIcon');
@@ -81,184 +198,354 @@
         document.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('theme') || 'light';
             const body = document.body;
-            const themeIcon = document.getElementById('themeToggle').querySelector('i');
+            const themeIcon = document.getElementById('themeIcon');
             if (savedTheme === 'dark') {
                 body.classList.replace('light-theme', 'dark-theme');
                 themeIcon.classList.replace('fa-sun', 'fa-moon');
                 themeIcon.classList.replace('text-yellow-500', 'text-gray-300');
             }
+            
+            // File input change handler
+            document.getElementById('audioFile').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                const processBtn = document.getElementById('processBtn');
+                const fileInfo = document.getElementById('fileInfo');
+                
+                if (file) {
+                    processBtn.disabled = false;
+                    fileInfo.innerHTML = `
+                        <i class="fas fa-file-audio mr-1"></i>
+                        ${file.name} (${(file.size / 1024).toFixed(1)} KB)
+                    `;
+                } else {
+                    processBtn.disabled = true;
+                    fileInfo.textContent = 'No file selected';
+                }
+            });
         });
 
+        // Recording functionality
+        let recordInterval;
         async function recordAudio() {
-            document.getElementById('recordStatus').innerText = 'Recording...';
+            const recordBtn = document.getElementById('recordBtn');
+            const recordStatus = document.getElementById('recordStatus');
+            const recordTimer = document.getElementById('recordTimer');
+            
+            if (recordBtn.textContent.includes('Stop')) {
+                // Stop recording
+                clearInterval(recordInterval);
+                recordBtn.innerHTML = '<i class="fas fa-circle mr-2"></i>Record';
+                recordBtn.classList.replace('bg-gray-500', 'bg-red-500');
+                recordTimer.classList.add('hidden');
+                return;
+            }
+            
+            // Start recording
+            recordBtn.innerHTML = '<i class="fas fa-stop mr-2"></i>Stop';
+            recordBtn.classList.replace('bg-red-500', 'bg-gray-500');
+            recordStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i> Recording...';
+            recordTimer.classList.remove('hidden');
+            
+            let seconds = 5;
+            recordTimer.textContent = `00:${seconds.toString().padStart(2, '0')}`;
+            
+            recordInterval = setInterval(() => {
+                seconds--;
+                recordTimer.textContent = `00:${seconds.toString().padStart(2, '0')}`;
+                if (seconds <= 0) {
+                    clearInterval(recordInterval);
+                    finishRecording();
+                }
+            }, 1000);
+            
             try {
                 const response = await fetch('http://localhost:8000/record/?duration=5', { method: 'POST' });
                 const result = await response.json();
                 if (result.error) {
-                    document.getElementById('recordStatus').innerText = `Error: ${result.error}`;
+                    recordStatus.innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i> Error: ${result.error}`;
                 } else {
-                    document.getElementById('recordStatus').innerText = `Audio recorded: ${result.filename}`;
+                    recordStatus.innerHTML = `<i class="fas fa-check-circle mr-1"></i> Audio recorded successfully`;
                 }
             } catch (error) {
                 console.error('Error recording audio:', error);
-                document.getElementById('recordStatus').innerText = 'Error recording audio';
+                recordStatus.innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i> Error recording audio`;
             }
         }
+        
+        function finishRecording() {
+            const recordBtn = document.getElementById('recordBtn');
+            const recordTimer = document.getElementById('recordTimer');
+            
+            recordBtn.innerHTML = '<i class="fas fa-circle mr-2"></i>Record';
+            recordBtn.classList.replace('bg-gray-500', 'bg-red-500');
+            recordTimer.classList.add('hidden');
+        }
 
+        // Process audio
         async function processAudio() {
             const fileInput = document.getElementById('audioFile');
             const file = fileInput.files[0];
+            const processBtn = document.getElementById('processBtn');
+            const keystrokesList = document.getElementById('keystrokesList');
+            
             if (!file) {
-                alert('Please select an audio file');
+                showAlert('Please select an audio file', 'error');
                 return;
             }
+            
+            processBtn.innerHTML = '<i class="fas fa-cog fa-spin mr-2"></i>Processing';
+            processBtn.disabled = true;
+            keystrokesList.innerHTML = '<div class="text-center py-8"><i class="fas fa-cog fa-spin text-2xl text-blue-500"></i><p class="mt-2">Processing audio...</p></div>';
+            
             const formData = new FormData();
             formData.append('file', file);
+            
             try {
-                document.getElementById('processResults').innerText = 'Processing...';
                 const response = await fetch('http://localhost:8000/process/', {
                     method: 'POST',
                     body: formData
                 });
                 const result = await response.json();
-                displayResults(result, 'processResults', 'process');
+                
+                processBtn.innerHTML = '<i class="fas fa-play mr-2"></i>Process';
+                processBtn.disabled = false;
+                
+                if (result.error) {
+                    showAlert(`Error: ${result.error}`, 'error');
+                    keystrokesList.innerHTML = '<div class="text-center py-10 text-gray-500 dark:text-gray-400"><i class="fas fa-exclamation-triangle text-4xl mb-2"></i><p>Error processing audio</p></div>';
+                } else {
+                    updateResults(result);
+                }
             } catch (error) {
                 console.error('Error processing audio:', error);
-                document.getElementById('processResults').innerText = 'Error processing audio';
+                processBtn.innerHTML = '<i class="fas fa-play mr-2"></i>Process';
+                processBtn.disabled = false;
+                showAlert('Error processing audio', 'error');
+                keystrokesList.innerHTML = '<div class="text-center py-10 text-gray-500 dark:text-gray-400"><i class="fas fa-exclamation-triangle text-4xl mb-2"></i><p>Error processing audio</p></div>';
             }
         }
 
-        function startStreaming() {
-            const ws = new WebSocket('ws://localhost:8000/ws/stream');
-            const resultsDiv = document.getElementById('streamResults');
-            resultsDiv.innerHTML = '<p>Streaming...</p>';
-            let results = [];
-
+        // Streaming functionality
+        let ws;
+        let streamInterval;
+        let isStreaming = false;
+        
+        function toggleStreaming() {
+            const streamBtn = document.getElementById('streamBtn');
+            const streamStatus = document.getElementById('streamStatus');
+            const streamTimer = document.getElementById('streamTimer');
+            const keystrokesList = document.getElementById('keystrokesList');
+            
+            if (isStreaming) {
+                // Stop streaming
+                clearInterval(streamInterval);
+                if (ws) ws.close();
+                isStreaming = false;
+                streamBtn.innerHTML = '<i class="fas fa-play mr-2"></i>Start Stream';
+                streamBtn.classList.replace('bg-gray-500', 'bg-purple-500');
+                streamTimer.classList.add('hidden');
+                streamStatus.innerHTML = '<i class="fas fa-check-circle mr-1"></i> Stream ended';
+                return;
+            }
+            
+            // Start streaming
+            isStreaming = true;
+            streamBtn.innerHTML = '<i class="fas fa-stop mr-2"></i>Stop Stream';
+            streamBtn.classList.replace('bg-purple-500', 'bg-gray-500');
+            streamStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i> Connecting...';
+            streamTimer.classList.remove('hidden');
+            keystrokesList.innerHTML = '<div class="text-center py-8"><i class="fas fa-circle-notch fa-spin text-2xl text-purple-500"></i><p class="mt-2">Listening for keystrokes...</p></div>';
+            
+            let seconds = 30;
+            streamTimer.textContent = `00:${seconds.toString().padStart(2, '0')}`;
+            
+            streamInterval = setInterval(() => {
+                seconds--;
+                streamTimer.textContent = `00:${seconds.toString().padStart(2, '0')}`;
+                if (seconds <= 0) {
+                    clearInterval(streamInterval);
+                    toggleStreaming();
+                }
+            }, 1000);
+            
+            // Initialize WebSocket
+            ws = new WebSocket('ws://localhost:8000/ws/stream');
+            
             ws.onopen = () => {
                 console.log('WebSocket connected');
+                streamStatus.innerHTML = '<i class="fas fa-circle text-xs text-green-500 mr-1"></i> Streaming (30s)';
             };
-
+            
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 if (data.error) {
-                    resultsDiv.innerText = `Error: ${data.error}`;
+                    streamStatus.innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i> Error: ${data.error}`;
                     return;
                 }
+                
                 if (data.keystroke !== undefined) {
-                    results.push(data);
-                    displayLiveResult(data, 'streamResults', 'ws_stream');
+                    addKeystrokeToUI(data);
+                    updateSummary(data);
                 } else if (data.summary) {
                     if (data.keystrokes) {
-                        results = data.keystrokes;
-                        displayResults(data, 'streamResults', 'ws_stream');
-                    } else {
-                        displayLiveResult(data, 'streamResults', 'ws_stream');
+                        // Batch update
+                        keystrokesList.innerHTML = '';
+                        data.keystrokes.forEach(ks => addKeystrokeToUI(ks));
+                        updateSummary(data);
                     }
-                } else if (data.alert) {
-                    displayAlert(data, 'streamResults');
                 }
             };
-
+            
             ws.onclose = () => {
                 console.log('WebSocket closed');
-                resultsDiv.innerHTML += '<p>Stream ended.</p>';
-                displayResults({
-                    keystrokes: results,
-                    summary: calculateSummary(results)
-                }, 'streamResults', 'ws_stream');
+                if (isStreaming) {
+                    streamStatus.innerHTML = '<i class="fas fa-check-circle mr-1"></i> Stream ended';
+                }
             };
-
+            
             ws.onerror = (error) => {
                 console.error('WebSocket error:', error);
-                resultsDiv.innerText = 'WebSocket error occurred';
+                streamStatus.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i> WebSocket error';
             };
         }
 
-        function displayLiveResult(data, elementId, source) {
-            const resultsDiv = document.getElementById(elementId);
-            let ul = resultsDiv.querySelector('ul');
-            if (!ul) {
-                ul = document.createElement('ul');
-                resultsDiv.appendChild(ul);
-            }
-            if (data.keystroke !== undefined) {
-                const li = document.createElement('li');
-                li.innerText = `Keystroke ${data.keystroke}: ${data.prediction} (Confidence: ${data.confidence.toFixed(2)})`;
-                li.style.backgroundColor = data.is_low_confidence ? 'yellow' : 'lightgreen';
-                const img = document.createElement('img');
-                img.src = `http://localhost:8000/spectrogram/${source}/${data.keystroke}`;
-                img.alt = `Spectrogram ${data.keystroke}`;
-                li.appendChild(img);
-                ul.appendChild(li);
-            }
-        }
-
-        function displayAlert(data, elementId) {
-            const resultsDiv = document.getElementById(elementId);
-            const alert = document.createElement('p');
-            alert.innerText = data.alert;
-            alert.className = 'alert';
-            resultsDiv.appendChild(alert);
-        }
-
-        function displayResults(data, elementId, source) {
-            const resultsDiv = document.getElementById(elementId);
-            resultsDiv.innerHTML = '';
-            if (data.error) {
-                resultsDiv.innerText = `Error: ${data.error}`;
-                return;
-            }
-            if (data.keystrokes && data.keystrokes.length > 0) {
-                const ul = document.createElement('ul');
-                data.keystrokes.forEach(ks => {
-                    const li = document.createElement('li');
-                    if (ks.alert) {
-                        li.innerText = ks.alert;
-                        li.className = 'alert';
-                    } else {
-                        li.innerText = `Keystroke ${ks.keystroke}: ${ks.prediction} (Confidence: ${ks.confidence.toFixed(2)})`;
-                        li.style.backgroundColor = ks.is_low_confidence ? 'yellow' : 'lightgreen';
-                        const img = document.createElement('img');
-                        img.src = `http://localhost:8000/spectrogram/${source}/${ks.keystroke}`;
-                        img.alt = `Spectrogram ${ks.keystroke}`;
-                        li.appendChild(img);
-                    }
-                    ul.appendChild(li);
-                });
-                resultsDiv.appendChild(ul);
-            }
-            const summary = document.createElement('p');
-            summary.innerText = `Summary: Characters: ${data.summary.characters}, Spaces: ${data.summary.spaces}, Enters: ${data.summary.enters}, Numbers: ${data.summary.numbers}`;
-            resultsDiv.appendChild(summary);
-        }
-
-        function calculateSummary(keystrokes) {
-            const char_count = keystrokes.filter(r => !['noise', 'space', 'enter'].includes(r.prediction)).length;
-            const space_count = keystrokes.filter(r => r.prediction === 'space').length;
-            const enter_count = keystrokes.filter(r => r.prediction === 'enter').length;
-            const number_count = keystrokes.filter(r => r.prediction.match(/^\d$/)).length;
-            return {
-                characters: char_count,
-                spaces: space_count,
-                enters: enter_count,
-                numbers: number_count
-            };
-        }
-
+        // Train model
         async function trainModel() {
-            document.getElementById('trainStatus').innerText = 'Training model...';
+            const trainBtn = document.getElementById('trainBtn');
+            const trainStatus = document.getElementById('trainStatus');
+            const trainProgress = document.getElementById('trainProgress');
+            const trainProgressBar = document.getElementById('trainProgressBar');
+            
+            trainBtn.innerHTML = '<i class="fas fa-cog fa-spin mr-2"></i>Training';
+            trainBtn.disabled = true;
+            trainStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i> Training model...';
+            trainProgress.classList.remove('hidden');
+            
+            // Simulate progress (in a real app, you'd use WebSocket or polling)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                trainProgressBar.style.width = `${Math.min(progress, 100)}%`;
+                if (progress >= 100) clearInterval(progressInterval);
+            }, 500);
+            
             try {
                 const response = await fetch('http://localhost:8000/train/', { method: 'POST' });
                 const result = await response.json();
+                
+                trainBtn.innerHTML = '<i class="fas fa-cogs mr-2"></i>Train Model';
+                trainBtn.disabled = false;
+                trainStatus.innerHTML = '<i class="fas fa-check-circle mr-1"></i> Model trained successfully';
+                
                 if (result.error) {
-                    document.getElementById('trainStatus').innerText = `Error: ${result.error}`;
-                } else {
-                    document.getElementById('trainStatus').innerText = 'Model trained successfully';
+                    showAlert(`Error: ${result.error}`, 'error');
                 }
             } catch (error) {
                 console.error('Error training model:', error);
-                document.getElementById('trainStatus').innerText = 'Error training model';
+                trainBtn.innerHTML = '<i class="fas fa-cogs mr-2"></i>Train Model';
+                trainBtn.disabled = false;
+                trainStatus.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i> Error training model';
+                showAlert('Error training model', 'error');
             }
+        }
+
+        // UI Helpers
+        function updateResults(data) {
+            const keystrokesList = document.getElementById('keystrokesList');
+            
+            if (!data.keystrokes || data.keystrokes.length === 0) {
+                keystrokesList.innerHTML = '<div class="text-center py-10 text-gray-500 dark:text-gray-400"><i class="fas fa-keyboard text-4xl mb-2"></i><p>No keystrokes detected</p></div>';
+                updateSummary({summary: {characters: 0, spaces: 0, enters: 0, numbers: 0}});
+                return;
+            }
+            
+            keystrokesList.innerHTML = '';
+            data.keystrokes.forEach(ks => addKeystrokeToUI(ks));
+            updateSummary(data);
+        }
+        
+        function addKeystrokeToUI(keystroke) {
+            const keystrokesList = document.getElementById('keystrokesList');
+            
+            // Create keystroke card
+            const card = document.createElement('div');
+            card.className = `keystroke-card bg-white dark:bg-slate-700 rounded-lg p-4 shadow-sm border-l-4 ${keystroke.is_low_confidence ? 'border-yellow-500' : 'border-green-500'}`;
+            
+            // Confidence bar
+            const confidencePercent = Math.round(keystroke.confidence * 100);
+            const confidenceColor = keystroke.confidence > 0.7 ? 'bg-green-500' : 
+                                 keystroke.confidence > 0.5 ? 'bg-yellow-500' : 'bg-red-500';
+            
+            card.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <div class="font-medium text-lg ${getKeyColor(keystroke.prediction)}">
+                        ${formatKeyDisplay(keystroke.prediction)}
+                    </div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                        #${keystroke.keystroke + 1}
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                        <span>Confidence</span>
+                        <span>${confidencePercent}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-slate-600 rounded-full h-2">
+                        <div class="confidence-bar h-2 rounded-full ${confidenceColor}" style="width: ${confidencePercent}%"></div>
+                    </div>
+                </div>
+                <div class="spectrogram-container flex items-center justify-center text-gray-400 dark:text-gray-500">
+                    <i class="fas fa-wave-square text-2xl"></i>
+                </div>
+                ${keystroke.is_low_confidence ? '<div class="mt-2 text-xs text-yellow-600 dark:text-yellow-400"><i class="fas fa-exclamation-triangle mr-1"></i>Low confidence</div>' : ''}
+            `;
+            
+            keystrokesList.prepend(card);
+        }
+        
+        function updateSummary(data) {
+            const summary = data.summary;
+            document.getElementById('charCount').textContent = summary.characters || 0;
+            document.getElementById('numCount').textContent = summary.numbers || 0;
+            document.getElementById('spaceCount').textContent = summary.spaces || 0;
+            document.getElementById('enterCount').textContent = summary.enters || 0;
+        }
+        
+        function formatKeyDisplay(key) {
+            if (key === 'space') return '[Space]';
+            if (key === 'enter') return '[Enter]';
+            return key.toUpperCase();
+        }
+        
+        function getKeyColor(key) {
+            if (/^[a-z]$/.test(key)) return 'text-blue-600 dark:text-blue-400';
+            if (/^[0-9]$/.test(key)) return 'text-green-600 dark:text-green-400';
+            if (key === 'space') return 'text-purple-600 dark:text-purple-400';
+            if (key === 'enter') return 'text-red-600 dark:text-red-400';
+            return 'text-gray-600 dark:text-gray-400';
+        }
+        
+        function showAlert(message, type = 'info') {
+            const alert = document.createElement('div');
+            alert.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'error' ? 'bg-red-500 text-white' : 
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
+            }`;
+            alert.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${
+                        type === 'error' ? 'fa-exclamation-circle' : 
+                        type === 'success' ? 'fa-check-circle' : 'fa-info-circle'
+                    } mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+                setTimeout(() => alert.remove(), 500);
+            }, 3000);
         }
     </script>
 </body>
