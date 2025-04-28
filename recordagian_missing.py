@@ -14,7 +14,7 @@ def record_sample(class_name, sample_idx):
     time.sleep(2)
     audio = sd.rec(int(DURATION * SAMPLE_RATE), samplerate=SAMPLE_RATE, channels=1)
     sd.wait()
-    if np.max(np.abs(audio)) < 0.01:
+    if np.max(np.abs(audio)) < 0.03:
         print("Warning: Too quiet, try again.")
         return False
     filepath = os.path.join(TRAINING_DATA_DIR, class_name, f"sample_{sample_idx}.wav")
