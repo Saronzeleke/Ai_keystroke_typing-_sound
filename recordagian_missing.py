@@ -5,7 +5,7 @@ import soundfile as sf
 import time
 import random
 
-SAMPLE_RATE = 44100
+SAMPLE_RATE = 44100   
 DURATION = 0.1
 TRAINING_DATA_DIR = "./training_data"
 
