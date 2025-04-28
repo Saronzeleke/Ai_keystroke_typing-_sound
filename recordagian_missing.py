@@ -3,45 +3,89 @@ import numpy as np
 import sounddevice as sd
 import soundfile as sf
 import time
-import random
 
-SAMPLE_RATE = 44100   
-DURATION = 0.1
+SAMPLE_RATE = 44100
+DURATION = 0.1  # 0.1 seconds per keystroke
 TRAINING_DATA_DIR = "./training_data"
 
-def record_sample(class_name, sample_idx):
-    print(f"\nRecording sample {sample_idx} for '{class_name}'")
-    time.sleep(2)
-    audio = sd.rec(int(DURATION * SAMPLE_RATE), samplerate=SAMPLE_RATE, channels=1)
-    sd.wait()
-    if np.max(np.abs(audio)) < 0.03:
-        print("Warning: Too quiet, try again.")
-        return False
-    filepath = os.path.join(TRAINING_DATA_DIR, class_name, f"sample_{sample_idx}.wav")
-    sf.write(filepath, audio, SAMPLE_RATE)
-    print(f"Saved: {filepath}")
-    return True
+# Define the missing samples you need to record
+MISSING_SAMPLES = {
+    'space': [1, 3, 6, 15],
+    'enter': [3, 5, 6, 7, 11],
+    'noise': [13]
+}
 
-def ensure_dirs():
-    for label in ['space', 'enter', 'noise']:
-        os.makedirs(os.path.join(TRAINING_DATA_DIR, label), exist_ok=True)
+class AudioRecorder:
+    def __init__(self, sample_rate=SAMPLE_RATE):
+        self.sample_rate = sample_rate
+        self.recording = []
+        self.is_recording = False
+        self.stream = None
 
-def main():
-    ensure_dirs()
+    def start_recording(self, max_duration=10):
+        self.recording = []
+        self.is_recording = True
+        start_time = time.time()
 
-    # Generate randomized order of sample indices for space and enter
-    sample_indices = list(range(20))
-    random.shuffle(sample_indices)
+        def callback(indata, frames, time, status):
+            if status:
+                print(f"Audio status: {status}")
+            if self.is_recording:
+                self.recording.append(indata.copy())
 
-    for i in sample_indices:
-        record_sample("space", i)
-        time.sleep(1)
-        record_sample("enter", i)
-        time.sleep(1)
+        self.stream = sd.InputStream(
+            callback=callback, channels=1, samplerate=self.sample_rate, blocksize=1024
+        )
+        self.stream.start()
+        print("Recording started...")
+        while self.is_recording and (time.time() - start_time < max_duration):
+            sd.sleep(100)
 
-    # Noise: only record sample 13
-    record_sample("noise", 13)
+    def stop_recording(self):
+        self.is_recording = False
+        if self.stream:
+            self.stream.stop()
+            self.stream.close()
+            self.stream = None
+        return np.concatenate(self.recording).flatten() if self.recording else np.array([])
+
+def record_missing_samples():
+    print("Recording missing samples only...")
+    print("Place your phone near the keyboard for clear recordings.\n")
+
+    for class_name, sample_indices in MISSING_SAMPLES.items():
+        class_dir = os.path.join(TRAINING_DATA_DIR, class_name)
+        os.makedirs(class_dir, exist_ok=True)
+
+        print(f"\n=== Recording {class_name.upper()} samples ===")
+        for sample_idx in sample_indices:
+            print(f"\nPreparing to record {class_name} sample #{sample_idx}...")
+            if class_name == "noise":
+                print("Make background noise (e.g., keyboard rustling, breath) in 2 seconds...")
+            else:
+                print(f"Press the '{class_name}' key in 2 seconds...")
+            
+            time.sleep(2)  # Give user time to prepare
+
+            recorder = AudioRecorder()
+            recorder.start_recording(max_duration=DURATION)
+            time.sleep(DURATION)
+            audio = recorder.stop_recording()
+
+            # Check for silent recordings
+            if len(audio) == 0 or np.max(np.abs(audio)) < 0.01:
+                print(f"Warning: No audio detected for {class_name} sample #{sample_idx}. Skipping...")
+                continue
+
+            # Save the file
+            filename = f"sample_{sample_idx}.wav"
+            filepath = os.path.join(class_dir, filename)
+            sf.write(filepath, audio, SAMPLE_RATE)
+            print(f"Saved: {filepath}")
+            
+            time.sleep(1)  # Pause between recordings
+
+    print("\n=== Missing samples recording complete ===")
 
 if __name__ == "__main__":
-    main()
-    print("Recording Completed.")
+    record_missing_samples()
