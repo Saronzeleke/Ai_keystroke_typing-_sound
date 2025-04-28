@@ -204,7 +204,7 @@ class AudioPreprocessor:
             print(f"Error creating spectrogram: {e}")
             return None
 
-    @staticmethod
+    @staticmethod 
     def plot_mel_spectrogram(audio, title="Mel Spectrogram", sr=SAMPLE_RATE, n_mels=N_MELS):
         
         try:
