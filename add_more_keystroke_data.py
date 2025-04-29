@@ -7,7 +7,7 @@ import time
 
 SAMPLE_RATE = 44100
 DURATION = 0.1 
-TARGET_SAMPLES_PER_CLASS = 50  # total desired per class
+TARGET_SAMPLES_PER_CLASS = 50
 TRAINING_DATA_DIR = "./training_data"
 CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ['space', 'enter', 'noise']
 class AudioRecorder:
