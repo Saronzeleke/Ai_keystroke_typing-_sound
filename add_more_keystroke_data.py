@@ -4,7 +4,7 @@ import sounddevice as sd
 import soundfile as sf
 import time
 
-# === Configuration ===
+
 SAMPLE_RATE = 44100
 DURATION = 0.1  # seconds per keystroke
 TARGET_SAMPLES_PER_CLASS = 50  # total desired per class
