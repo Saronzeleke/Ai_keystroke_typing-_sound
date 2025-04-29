@@ -41,7 +41,7 @@ class AudioRecorder:
             sd.sleep(100)
 
     def stop_recording(self):
-        self.is_recording = False
+        self.is_recording = False 
         if self.stream:
             self.stream.stop()
             self.stream.close()
