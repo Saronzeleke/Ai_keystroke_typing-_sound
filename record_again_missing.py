@@ -14,8 +14,6 @@ MISSING_SAMPLES = {
     'enter': [3, 5, 6, 7, 11],
     'noise': [13]
 }
-
-
 class AudioRecorder:
     def __init__(self, sample_rate=SAMPLE_RATE):
         self.sample_rate = sample_rate
