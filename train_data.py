@@ -16,7 +16,7 @@ HOP_LENGTH = 512
 CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ['space', 'enter', 'noise']
 NUM_CLASSES = len(CLASSES)
 EXPECTED_INPUT_SHAPE = (N_MELS, 87, 1)
-TRAINING_DATA_DIR = "./training_data"  # Update this path if your training_data directory is elsewhere
+TRAINING_DATA_DIR = "./training_data"  
 MODEL_PATH = "keystroke_model.h5"
 
 class AudioPreprocessor:
