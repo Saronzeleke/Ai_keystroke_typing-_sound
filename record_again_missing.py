@@ -5,7 +5,7 @@ import soundfile as sf
 import time
 
 SAMPLE_RATE = 44100
-DURATION = 0.1  # 0.1 seconds per keystroke
+DURATION = 0.1  
 TRAINING_DATA_DIR = "./training_data"
 
 # Define the missing samples you need to record
