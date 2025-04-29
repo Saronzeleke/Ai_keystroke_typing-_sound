@@ -80,7 +80,6 @@ def record_realtime(class_name, sample_idx):
     return filepath
 
 
-# === Main Recording Loop ===
 def main():
     print("📣 Make sure your mic is working and close to the keyboard.")
     create_directory_structure()
