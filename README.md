@@ -65,15 +65,16 @@ Step 1: Run the App
  python main.py
 Starts a FastAPI backend server with the following endpoints:
 
-**/record/**
+**. /record/**
 
-**/process/**
+**. /process/**
 
-**/stream/**
+**. /stream/**
 
-**/ws/stream (WebSocket for real-time predictions)**
+**. /ws/stream (WebSocket for real-time predictions)**
 
-**/train/ (Model training)**
+**./train/ (Model training)**
+
 Step 2: Open the Frontend
 Start a local server:
 python -m http.server 8080
@@ -95,8 +96,7 @@ pytest
 
 # 👨‍💻 Author
 Saron Zeleke
-
-GitHub: github.com/Saronzeleke
+# GitHub: github.com/Saronzeleke
 
 # 📄 License
 This project is licensed under the MIT License.
@@ -109,6 +109,5 @@ You are free to:
 
 ✅ Fork it and build your own version
 # Please credit the original author Saron Zeleke if you use or adapt this work.
-
 🔗 Repo: github.com/Saronzeleke/Ai_keystroke_typing-_sound
 
