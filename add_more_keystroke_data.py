@@ -43,9 +43,7 @@ class AudioRecorder:
             self.stream.close()
             self.stream = None
         return np.concatenate(self.recording).flatten() if self.recording else np.array([])
-
-
-# === Directory Setup ===
+    
 def create_directory_structure():
     os.makedirs(TRAINING_DATA_DIR, exist_ok=True)
     for class_name in CLASSES:
