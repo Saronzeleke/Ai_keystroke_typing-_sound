@@ -6,7 +6,7 @@ import time
 
 
 SAMPLE_RATE = 44100
-DURATION = 0.1  # seconds per keystroke
+DURATION = 0.1 
 TARGET_SAMPLES_PER_CLASS = 50  # total desired per class
 TRAINING_DATA_DIR = "./training_data"
 
