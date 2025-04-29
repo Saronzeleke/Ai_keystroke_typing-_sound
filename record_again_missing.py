@@ -65,7 +65,7 @@ def record_missing_samples():
             else:
                 print(f"Press the '{class_name}' key in 2 seconds...")
             
-            time.sleep(2)  # Give user time to prepare
+            time.sleep(3)  # Give user time to prepare
 
             recorder = AudioRecorder()
             recorder.start_recording(max_duration=DURATION)
@@ -83,7 +83,7 @@ def record_missing_samples():
             sf.write(filepath, audio, SAMPLE_RATE)
             print(f"Saved: {filepath}")
             
-            time.sleep(1)  # Pause between recordings
+            time.sleep(3)  # Pause between recordings
 
     print("\n=== Missing samples recording complete ===")
 
