@@ -8,7 +8,7 @@ SAMPLE_RATE = 44100
 DURATION = 0.1  
 TRAINING_DATA_DIR = "./training_data"
 
-# Define the missing samples you need to record
+
 MISSING_SAMPLES = {
     'space': [1, 3, 6, 15],
     'enter': [3, 5, 6, 7, 11],
