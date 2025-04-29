@@ -60,7 +60,7 @@ def record_realtime(class_name, sample_idx):
         print("Make a noise (e.g., rustle paper, human voice....) in 2 seconds...")
     else:
         print(f"Press the '{class_name}' key in 2 seconds...")
-    time.sleep(2)  # Allow time to prepare
+    time.sleep(3)  # Allow time to prepare
 
     recorder = AudioRecorder()
     recorder.start_recording(max_duration=DURATION)
@@ -94,15 +94,15 @@ def main():
             max_attempts = 3
             while filepath is None and attempts < max_attempts:
                 filepath = record_realtime(class_name, idx)
-                attempts += 1
+                attempts += 3
                 if filepath is None:
                     print(f"Retry {attempts}/{max_attempts} for {class_name}, sample {idx}")
-                    time.sleep(1)
+                    time.sleep(3)
             if filepath:
-                total_samples += 1
+                total_samples += 3
             else:
                 print(f"Failed to record {class_name}, sample {idx} after {max_attempts} attempts")
-            time.sleep(1)  # Pause between recordings
+            time.sleep(3)  # Pause between recordings
         print(f"Completed {SAMPLES_PER_CLASS} samples for '{class_name}'")
 
     print(f"\nTraining data created in {TRAINING_DATA_DIR}")
