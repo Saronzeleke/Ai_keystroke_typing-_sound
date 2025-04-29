@@ -12,9 +12,6 @@ TRAINING_DATA_DIR = "./training_data"
 
 # Classes: digits, lowercase letters, space, enter, noise
 CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ['space', 'enter', 'noise']
-
-
-# === Audio Recorder Class ===
 class AudioRecorder:
     def __init__(self, sample_rate=SAMPLE_RATE):
         self.sample_rate = sample_rate
