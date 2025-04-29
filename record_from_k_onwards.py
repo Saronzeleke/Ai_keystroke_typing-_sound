@@ -11,7 +11,7 @@ TARGET_SAMPLES_PER_CLASS = 50  # total per class
 TRAINING_DATA_DIR = "./training_data"
 
 # Remaining classes only (you've already done 0-9 and a-j)
-CLASSES = [chr(i) for i in range(ord('k'), ord('z')+1)] + ['space', 'enter', 'noise']
+CLASSES = [chr(i) for i in range(ord('n'), ord('z')+1)] + ['space', 'enter', 'noise']
 
 class AudioRecorder:
     def __init__(self, sample_rate=SAMPLE_RATE):
