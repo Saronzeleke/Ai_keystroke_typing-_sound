@@ -64,7 +64,7 @@ def record_missing_samples():
             else:
                 print(f"Press the '{class_name}' key in 2 seconds...")
             
-            time.sleep(3)  # Give user time to prepare
+            time.sleep(3)  
 
             recorder = AudioRecorder()
             recorder.start_recording(max_duration=DURATION)
