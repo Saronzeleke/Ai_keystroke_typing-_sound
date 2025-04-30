@@ -6,6 +6,7 @@ from tensorflow.keras import layers, models
 from sklearn.model_selection import train_test_split
 from scipy import signal
 import noisereduce as nr
+from tensorflow.keras.callbacks import ModelCheckpoint
 
 # Constants from main.py
 SAMPLE_RATE = 44100
