@@ -9,7 +9,7 @@ SAMPLE_RATE = 44100
 DURATION = 0.1  # 0.1 seconds per keystroke
 CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ['space', 'enter', 'noise']
 TRAINING_DATA_DIR = "./training_data"  
-SAMPLES_PER_CLASS = 20  
+SAMPLES_PER_CLASS = 50  
 
 class AudioRecorder:
     def __init__(self, sample_rate=SAMPLE_RATE):
