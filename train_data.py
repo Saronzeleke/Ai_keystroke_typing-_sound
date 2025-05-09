@@ -8,7 +8,7 @@ from scipy import signal
 import noisereduce as nr
 from tensorflow.keras.callbacks import ModelCheckpoint
 
-# Constants from main.py
+
 SAMPLE_RATE = 44100
 DURATION = 0.1
 N_MELS = 128
@@ -176,27 +176,27 @@ def prepare_training_data(data_dir):
     return X, y
 
 def main():
-    # Load and preprocess training data
+   
     print("Loading training data...")
     X, y = prepare_training_data(TRAINING_DATA_DIR)
     if len(X) == 0:
         print("Error: No valid training data found. Please run create_train_data_realtime.py first.")
         return
 
-    # Split data into training and validation sets
+  
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
     print(f"Training samples: {len(X_train)}, Validation samples: {len(X_val)}")
 
-    # Initialize and train the model
+  
     print("Training model...")
     model = KeystrokeCNN(input_shape=EXPECTED_INPUT_SHAPE)
     history = model.train(X_train, y_train, X_val, y_val, epochs=50, batch_size=32)
 
-    # Save the trained model
+   
     model.save_model(MODEL_PATH)
     print(f"Training completed. Model saved as {MODEL_PATH}")
 
-    # Print training summary
+
     final_train_acc = history.history['accuracy'][-1]
     final_val_acc = history.history['val_accuracy'][-1]
     print(f"Final training accuracy: {final_train_acc:.4f}")
