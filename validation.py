@@ -15,7 +15,7 @@ for class_name in os.listdir(source_dir):
     class_path = os.path.join(source_dir, class_name)
     
     if not os.path.isdir(class_path):
-        continue  # Skip non-directory files
+        continue  
 
     # List and shuffle files
     files = os.listdir(class_path)
