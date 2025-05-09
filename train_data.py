@@ -180,7 +180,7 @@ def main():
     print("Loading training data...")
     X, y = prepare_training_data(TRAINING_DATA_DIR)
     if len(X) == 0:
-        print("Error: No valid training data found. Please run create_train_data_realtime.py first.")
+        print("Error: No valid training data found. ")
         return
 
   
