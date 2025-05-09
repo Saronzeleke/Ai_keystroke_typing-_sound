@@ -4,7 +4,7 @@ import random
 
 source_dir = 'training_data'      
 val_dir = 'validation_data'        
-val_split = 0.2                    
+val_split = 0.4                   
 random.seed(42)                    
 
 os.makedirs(val_dir, exist_ok=True)
@@ -33,5 +33,4 @@ for class_name in os.listdir(source_dir):
         shutil.copy2(src, dst)
 
     print(f"Copied {val_count} files from '{class_name}' to validation set.")
-print("\n✅ Validation data created in 'validat
-ion_data' folder without deleting original files.")
+
