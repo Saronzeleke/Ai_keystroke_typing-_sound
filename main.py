@@ -335,7 +335,7 @@ async def process_audio(file: UploadFile = File(...)):
             for i, ks in enumerate(keystrokes):
                 print(f"Processing keystroke {i}, length: {len(ks)} samples")
                 spectrogram = AudioPreprocessor.create_mel_spectrogram(ks)
-                # Display spectrogram in backend
+             
                 AudioPreprocessor.plot_mel_spectrogram(ks, title=f"Keystroke {i}: {file.filename}")
                 pred_idx, confidences = model.predict(spectrogram)
                 prediction = CLASSES[pred_idx]
@@ -412,7 +412,7 @@ async def stream_audio(duration: float = Query(30.0, gt=0)):
             for i, ks in enumerate(keystrokes):
                 print(f"Processing keystroke {i} in chunk, length: {len(ks)} samples")
                 spectrogram = AudioPreprocessor.create_mel_spectrogram(ks)
-                # Display spectrogram in backend
+            
                 AudioPreprocessor.plot_mel_spectrogram(ks, title=f"Stream Keystroke {len(results) + i}")
                 pred_idx, confidences = model.predict(spectrogram)
                 prediction = CLASSES[pred_idx]

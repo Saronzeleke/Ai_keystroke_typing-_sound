@@ -2,7 +2,6 @@ import os
 import shutil
 import random
 
-# Configuration
 source_dir = 'training_data'       #  original dataset
 val_dir = 'validation_data'        # New directory for validation data
 val_split = 0.2                    # 20% validation split
