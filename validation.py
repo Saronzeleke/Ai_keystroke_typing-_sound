@@ -33,5 +33,5 @@ for class_name in os.listdir(source_dir):
         shutil.copy2(src, dst)
 
     print(f"Copied {val_count} files from '{class_name}' to validation set.")
-
-print("\n✅ Validation data created in 'validation_data' folder without deleting original files.")
+print("\n✅ Validation data created in 'validat
+ion_data' folder without deleting original files.")

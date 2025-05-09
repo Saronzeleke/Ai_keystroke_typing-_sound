@@ -190,7 +190,7 @@ def main():
   
     print("Training model...")
     model = KeystrokeCNN(input_shape=EXPECTED_INPUT_SHAPE)
-    history = model.train(X_train, y_train, X_val, y_val, epochs=50, batch_size=32)
+    history = model.train(X_train, y_train, X_val, y_val, epochs=70, batch_size=32)
 
    
     model.save_model(MODEL_PATH)
