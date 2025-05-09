@@ -125,7 +125,7 @@ class KeystrokeCNN:
         model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
         return model
 
-    def train(self, X_train, y_train, X_val, y_val, epochs=50, batch_size=32):
+    def train(self, X_train, y_train, X_val, y_val, epochs=70, batch_size=32):
         checkpoint_callback = ModelCheckpoint(MODEL_PATH, save_best_only=True, monitor='val_loss', mode='min')
         history = self.model.fit(
             X_train, y_train, validation_data=(X_val, y_val), epochs=epochs, batch_size=batch_size ,callbacks=[checkpoint_callback]
