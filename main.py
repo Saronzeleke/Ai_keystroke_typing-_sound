@@ -506,7 +506,7 @@ async def train_model():
                     keystroke = AudioPreprocessor.extract_keystroke(audio)
                     if keystroke is not None:
                         AudioPreprocessor.plot_mel_spectrogram(keystroke, title=f"Training Sample: {label}")
-                    break  # Only one sample per class
+                    break  
         
         with model_lock:
             model = KeystrokeCNN(input_shape=EXPECTED_INPUT_SHAPE)
