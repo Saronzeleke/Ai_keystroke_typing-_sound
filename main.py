@@ -32,12 +32,9 @@ NUM_CLASSES = len(CLASSES)
 EXPECTED_INPUT_SHAPE = (N_MELS, 87, 1)
 TRAINING_DATA_DIR = r"C:\Users\USER\Desktop\Ai_keystroke_typing-_sound-1\training_data"
 MODEL_PATH = r"C:\Users\USER\Desktop\Ai_keystroke_typing-_sound-1\keystroke_model.h5"
-
-
 model = None
 model_lock = Lock()
 
-# Suppress TensorFlow warnings
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 @asynccontextmanager
@@ -492,8 +489,7 @@ async def train_model():
             return JSONResponse(status_code=400, content={"error": "No valid training data found"})
         X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
         print(f"Training samples: {len(X_train)}, Validation samples: {len(X_val)}")
-        
-        # Display spectrograms for one sample per class
+     
         for label in CLASSES:
             label_dir = os.path.join(TRAINING_DATA_DIR, label)
             if not os.path.isdir(label_dir):
@@ -506,7 +502,7 @@ async def train_model():
                     keystroke = AudioPreprocessor.extract_keystroke(audio)
                     if keystroke is not None:
                         AudioPreprocessor.plot_mel_spectrogram(keystroke, title=f"Training Sample: {label}")
-                    break  # Only one sample per class
+                    break 
         
         with model_lock:
             model = KeystrokeCNN(input_shape=EXPECTED_INPUT_SHAPE)
