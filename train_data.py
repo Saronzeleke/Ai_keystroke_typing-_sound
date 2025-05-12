@@ -7,8 +7,6 @@ from sklearn.model_selection import train_test_split
 from scipy import signal
 import noisereduce as nr
 from tensorflow.keras.callbacks import ModelCheckpoint
-
-
 SAMPLE_RATE = 44100
 DURATION = 0.1
 N_MELS = 128
