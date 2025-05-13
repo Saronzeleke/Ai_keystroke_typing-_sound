@@ -432,7 +432,7 @@ async def stream_audio(duration: float = Query(30.0, gt=0)):
 
             if silent_count >= 4:
                 print("🔇 Summary: {'characters': 0, 'spaces': 0, 'enters': 0, 'numbers': 0}")
-                last_print_time = time.time()
+                time.time()
                 silent_count = 0
 
         recorder.stop_recording()
