@@ -1,0 +1,81 @@
+Metadata-Version: 2.1
+Name: requirements.py
+Version: 1.0.1
+Summary: Find updates for packages in requirements.txt on pypi
+Author-email: cuzi <cuzi@openmail.cc>
+License: GPL-3.0-or-later
+Project-URL: Homepage, https://github.com/cvzi/requirements
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pip (>=22.0.4)
+Requires-Dist: packaging (>=21.0)
+Provides-Extra: testing
+Requires-Dist: pytest ; extra == 'testing'
+
+# requirements.py
+Find updates for packages in requirements.txt on pypi
+
+![Screenrecord](https://github.com/cvzi/requirements/raw/screenshots/video.png)
+
+## Usage
+
+You can use the file [requirements.py](https://github.com/cvzi/requirements/blob/main/requirements/requirements.py), simply
+run `requirements.py` in a folder that contains a `requirements.txt`
+
+Or run `requirements.py path/to/first/requirements.txt path/to/second/requirements.txt`
+
+
+You can also install the module with its dependencies from [pypi.org](https://pypi.org/project/requirements.py/):
+
+```sh
+pip install requirements.py
+```
+
+Once installed the module can be used directly with `python -m requirements` or the command `requirements`.
+
+It also offers some functions to query pypi and requirements.txt programmatically:
+
+```python
+import requirements
+
+requirements.get_versions("lxml")
+[<Version('4.9.2')>, <Version('4.9.1')>, <Version('4.9.0')>, <Version('4.8.0')>, ...]
+
+requirements.parse("lxml == 4.0.0")
+('lxml', '==', <Version('4.0.0')>, '4.0.0', 0)
+
+requirements.parse_file("requirements.txt")
+[('lxml', '==', <Version('4.9.0')>, '4.9.0', 0), ('defusedxml', '>=', <Version('0.6.0')>, '0.6.0', 1)]
+
+requirements.check_files(["requirements.txt"])
+{
+    'defusedxml': {
+        'clause': '=',
+        'current_version': packaging.version.Version('0.6.0'),
+        'available_versions': [
+            packaging.version.Version('0.4'),
+            packaging.version.Version('0.4.1'),
+            packaging.version.Version('0.5.0'),
+            packaging.version.Version('0.6.0'),
+            packaging.version.Version('0.7.0'),
+            packaging.version.Version('0.7.1')]},
+    'lxml': {
+        'clause': '==',
+        'current_version': packaging.version.Version('4.9.0'),
+        'available_versions': [
+            packaging.version.Version('4.7.1'),
+            packaging.version.Version('4.8.0'),
+            packaging.version.Version('4.9.0'),
+            packaging.version.Version('4.9.1'),
+            packaging.version.Version('4.9.2'),
+            ...
+]}}
+```
