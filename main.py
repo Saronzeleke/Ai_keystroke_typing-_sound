@@ -447,13 +447,11 @@ async def stream_audio(duration: float = Query(30.0, gt=0)):
                     "numbers": 0
                 }
             }
-
         char_count = len([r for r in results if r['prediction'] not in ['noise', 'space', 'enter']])
         space_count = len([r for r in results if r['prediction'] == 'space'])
         enter_count = len([r for r in results if r['prediction'] == 'enter'])
         number_count = len([r for r in results if r['prediction'] in [str(i) for i in range(10)]])
         print(f"Final results: {len(results)} keystrokes, {char_count} characters")
-
         if char_count == 0 and space_count == 0 and enter_count == 0 and number_count == 0:
             return {
                 "summary": {
@@ -463,7 +461,6 @@ async def stream_audio(duration: float = Query(30.0, gt=0)):
                     "numbers": 0
                 }
             }
-
         return {
             "keystrokes": results,
             "summary": {
@@ -506,7 +503,7 @@ async def train_model():
         
         with model_lock:
             model = KeystrokeCNN(input_shape=EXPECTED_INPUT_SHAPE)
-            history = model.train(X_train, y_train, X_val, y_val, epochs=50, batch_size=32)
+            history = model.train(X_train, y_train, X_val, y_val, epochs=70, batch_size=32)
             model.save_model(MODEL_PATH)
             print(f"Model trained and saved as {MODEL_PATH}")
         
