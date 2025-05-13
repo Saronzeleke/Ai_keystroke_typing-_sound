@@ -394,7 +394,7 @@ async def stream_audio(duration: float = Query(30.0, gt=0)):
         chunk_duration = 0.5
         chunk_samples = int(chunk_duration * SAMPLE_RATE)
         results = []
-        last_print_time = start_time
+        start_time
         silent_count = 0
 
         while time.time() - start_time < duration:
