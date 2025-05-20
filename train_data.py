@@ -3,8 +3,6 @@ import numpy as np
 import librosa
 from tensorflow.keras import layers, models
 from sklearn.model_selecetion  import train_test_split
-
-
 from scipy import signal
 import noisereduce as nr
 from tensorflow.keras.callbacks import ModelCheckpoint  
