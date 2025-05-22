@@ -15,5 +15,4 @@ for class_name in os.listdir(source_dir):
         dst = os.path.join(dest_class_path, file_name)
         shutil.move(src, dst)
         print(f"Moved {file_name} from validation_data/{class_name} to training_data/{class_name}")
-
     print(f"Moved {len(files)} files for class '{class_name}'")
