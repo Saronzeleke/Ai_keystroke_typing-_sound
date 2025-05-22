@@ -9,7 +9,6 @@ from sklearn.model_selection import train_test_split
 from scipy import signal
 import noisereduce as nr
 import matplotlib.pyplot as plt
-
 SAMPLE_RATE = 44100
 DURATION = 0.1
 N_MELS = 128
@@ -20,7 +19,6 @@ NUM_CLASSES = len(CLASSES)
 EXPECTED_INPUT_SHAPE = (N_MELS, 87, 1)
 TRAINING_DATA_DIR = "./training_data"
 MODEL_PATH = "keystroke_model.keras"
-
 class AudioPreprocessor:
     @staticmethod
     def load_audio(file_path, sr=SAMPLE_RATE):
@@ -31,7 +29,6 @@ class AudioPreprocessor:
         except Exception as e:
             print(f"Error loading audio {file_path}: {e}")
             raise
-
     @staticmethod
     def reduce_noise(audio, sr=SAMPLE_RATE):
         try:
@@ -49,7 +46,6 @@ class AudioPreprocessor:
         except Exception as e:
             print(f"Error reducing noise: {e}")
             return audio
-
     @staticmethod
     def extract_keystroke(audio, sr=SAMPLE_RATE, threshold=0.05, min_silence=0.05):
         try:
@@ -72,7 +68,6 @@ class AudioPreprocessor:
         except Exception as e:
             print(f"Error extracting keystroke: {e}")
             return None
-
     @staticmethod
     def create_mel_spectrogram(audio, sr=SAMPLE_RATE, n_mels=N_MELS):
         try:
@@ -98,13 +93,11 @@ class AudioPreprocessor:
         except Exception as e:
             print(f"Error creating spectrogram: {e}")
             return None
-
 class KeystrokeCNN:
     def __init__(self, input_shape=EXPECTED_INPUT_SHAPE, num_classes=NUM_CLASSES):
         self.input_shape = input_shape
         self.num_classes = num_classes
         self.model = self.build_model()
-
     def build_model(self):
         model = models.Sequential([
             layers.Input(shape=self.input_shape),
@@ -130,7 +123,6 @@ class KeystrokeCNN:
                       loss='sparse_categorical_crossentropy', 
                       metrics=['accuracy'])
         return model
-
     def train(self, X_train, y_train, X_val, y_val, epochs=50, batch_size=32):
         checkpoint_callback = ModelCheckpoint(MODEL_PATH, save_best_only=True, monitor='val_loss', mode='min')
         early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
@@ -142,11 +134,9 @@ class KeystrokeCNN:
             callbacks=[checkpoint_callback, early_stopping]
         )
         return history
-
     def save_model(self, filepath):
         self.model.save(filepath)
         print(f"Model saved to {filepath}")
-
 def prepare_training_data(data_dir):
     class_counts = {label: 0 for label in CLASSES}
     X, y = [], []
@@ -186,7 +176,6 @@ def prepare_training_data(data_dir):
         return X, y
     print(f"Loaded {len(X)} samples across {len(np.unique(y))} classes")
     return X, y
-
 def plot_training_history(history):
     plt.figure(figsize=(12, 4))
     plt.subplot(1, 2, 1)
@@ -205,36 +194,29 @@ def plot_training_history(history):
     plt.legend()
     plt.savefig('training_history.png')
     plt.close()
-
 def main():
     print("Loading training data...")
     X, y = prepare_training_data(TRAINING_DATA_DIR)
     if len(X) == 0:
         print("Error: No valid training data found.")
         return
-
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
     print(f"Training samples: {len(X_train)}, Validation samples: {len(X_val)}")
     print(f"Training spectrogram mean: {np.mean(X_train):.4f}, std: {np.std(X_train):.4f}")
     print(f"Validation spectrogram mean: {np.mean(X_val):.4f}, std: {np.std(X_val):.4f}")
-
     print("Training model...")
     model = KeystrokeCNN(input_shape=EXPECTED_INPUT_SHAPE)
     history = model.train(X_train, y_train, X_val, y_val, epochs=50, batch_size=32)
-
     model.save_model(MODEL_PATH)
     print(f"Training completed. Model saved as {MODEL_PATH}")
-
     final_train_acc = history.history['accuracy'][-1]
     final_val_acc = history.history['val_accuracy'][-1]
     print(f"Final training accuracy: {final_train_acc:.4f}")
     print(f"Final validation accuracy: {final_val_acc:.4f}")
-
     print("Plotting training history...")
     plot_training_history(history)
     print("Training history plot saved as 'training_history.png'")
-
 if __name__ == "__main__":
     main()
