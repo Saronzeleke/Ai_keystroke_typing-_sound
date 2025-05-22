@@ -1,0 +1,28 @@
+import os
+import shutil
+
+source_dir ='training_data'
+val_dir ='validation_data'
+files_to_copy = 20  
+
+os.makedirs(val_dir, exist_ok=True)
+
+for class_name in os.listdir(source_dir):
+    class_path = os.path.join(source_dir, class_name)
+
+    if not os.path.isdir(class_path):
+        continue
+
+    files = sorted(os.listdir(class_path))  
+    selected_files = files[:files_to_copy]  
+
+    val_class_path = os.path.join(val_dir, class_name)
+    os.makedirs(val_class_path, exist_ok=True)
+
+    for file_name in selected_files:
+        src = os.path.join(class_path, file_name)
+        dst = os.path.join(val_class_path, file_name)
+        shutil.move(src, dst)
+
+
+    print(f"Copied {len(selected_files)} files from '{class_name}' to validation set.")
