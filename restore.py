@@ -3,8 +3,6 @@ import shutil
 
 source_dir = 'validation_data'
 dest_dir = 'training_data'
-
-
 os.makedirs(dest_dir, exist_ok=True)
 
 
@@ -25,8 +23,3 @@ for class_name in os.listdir(source_dir):
         print(f"Moved {file_name} from validation_data/{class_name} to training_data/{class_name}")
 
     print(f"Moved {len(files)} files for class '{class_name}'")
-
-
-# if not any(os.listdir(source_dir)):
-#     os.rmdir(source_dir)
-#     print("Removed validation_data folder")
