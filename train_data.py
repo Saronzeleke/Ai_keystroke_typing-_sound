@@ -1,12 +1,16 @@
 import os
 import numpy as np
 import librosa
-from tensorflow.keras import layers, models,keras
-from sklearn.model_selecetion  import train_test_split 
+from tensorflow.keras import layers, models
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.regularizers import l2
+from sklearn.model_selection import train_test_split
 from scipy import signal
 import noisereduce as nr
-from tensorflow.keras.callbacks import ModelCheckpoint  
-SAMPLE_RATE = 44100 
+import matplotlib.pyplot as plt
+
+SAMPLE_RATE = 44100
 DURATION = 0.1
 N_MELS = 128
 FFT_WINDOW = 1024
@@ -14,7 +18,7 @@ HOP_LENGTH = 512
 CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ['space', 'enter', 'noise']
 NUM_CLASSES = len(CLASSES)
 EXPECTED_INPUT_SHAPE = (N_MELS, 87, 1)
-TRAINING_DATA_DIR = "./training_data"  
+TRAINING_DATA_DIR = "./training_data"
 MODEL_PATH = "keystroke_model.keras"
 
 class AudioPreprocessor:
@@ -77,6 +81,9 @@ class AudioPreprocessor:
                 audio = np.pad(audio, (0, target_length - len(audio)), mode='constant')
             elif len(audio) > target_length:
                 audio = audio[:target_length]
+            if np.random.rand() < 0.5:  # 50% chance of augmentation
+                audio += np.random.normal(0, 0.01, audio.shape)  # Add random noise
+                audio = librosa.effects.pitch_shift(audio, sr=sr, n_steps=np.random.uniform(-1, 1))  # Pitch shift
             S = librosa.feature.melspectrogram(
                 y=audio, sr=sr, n_mels=n_mels, n_fft=FFT_WINDOW, hop_length=HOP_LENGTH
             )
@@ -101,31 +108,38 @@ class KeystrokeCNN:
     def build_model(self):
         model = models.Sequential([
             layers.Input(shape=self.input_shape),
-            layers.Conv2D(32, (3, 3), activation='relu', padding='same'),
+            layers.Conv2D(32, (3, 3), activation='relu', padding='same', kernel_regularizer=l2(0.01)),
             layers.BatchNormalization(),
             layers.MaxPooling2D((2, 2)),
-            layers.Dropout(0.25),
-            layers.Conv2D(64, (3, 3), activation='relu', padding='same'),
+            layers.Dropout(0.3),
+            layers.Conv2D(64, (3, 3), activation='relu', padding='same', kernel_regularizer=l2(0.01)),
             layers.BatchNormalization(),
             layers.MaxPooling2D((2, 2)),
-            layers.Dropout(0.25),
-            layers.Conv2D(128, (3, 3), activation='relu', padding='same'),
+            layers.Dropout(0.3),
+            layers.Conv2D(128, (3, 3), activation='relu', padding='same', kernel_regularizer=l2(0.01)),
             layers.BatchNormalization(),
             layers.MaxPooling2D((2, 2)),
-            layers.Dropout(0.25),
+            layers.Dropout(0.3),
             layers.Flatten(),
-            layers.Dense(256, activation='relu'),
+            layers.Dense(256, activation='relu', kernel_regularizer=l2(0.01)),
             layers.BatchNormalization(),
-            layers.Dropout(0.5),
+            layers.Dropout(0.6),
             layers.Dense(self.num_classes, activation='softmax')
         ])
-        model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        model.compile(optimizer=Adam(learning_rate=0.0001), 
+                      loss='sparse_categorical_crossentropy', 
+                      metrics=['accuracy'])
         return model
 
-    def train(self, X_train, y_train, X_val, y_val, epochs=70, batch_size=32):
+    def train(self, X_train, y_train, X_val, y_val, epochs=50, batch_size=32):
         checkpoint_callback = ModelCheckpoint(MODEL_PATH, save_best_only=True, monitor='val_loss', mode='min')
+        early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
         history = self.model.fit(
-            X_train, y_train, validation_data=(X_val, y_val), epochs=epochs, batch_size=batch_size ,callbacks=[checkpoint_callback]
+            X_train, y_train, 
+            validation_data=(X_val, y_val), 
+            epochs=epochs, 
+            batch_size=batch_size,
+            callbacks=[checkpoint_callback, early_stopping]
         )
         return history
 
@@ -134,19 +148,19 @@ class KeystrokeCNN:
         print(f"Model saved to {filepath}")
 
 def prepare_training_data(data_dir):
-    X = []
-    y = []
+    class_counts = {label: 0 for label in CLASSES}
+    X, y = [], []
     for label in os.listdir(data_dir):
-        label_dir = os.path.join(data_dir, label)
-        if not os.path.isdir(label_dir):
-            continue
         if label not in CLASSES:
             print(f"Skipping unknown label: {label}")
             continue
         class_idx = CLASSES.index(label)
-        for file in os.listdir(label_dir):
-            if not file.endswith('.wav'):
-                continue
+        label_dir = os.path.join(data_dir, label)
+        if not os.path.isdir(label_dir):
+            continue
+        files = [f for f in os.listdir(label_dir) if f.endswith('.wav')]
+        class_counts[label] = len(files)
+        for file in files:
             file_path = os.path.join(label_dir, file)
             try:
                 audio = AudioPreprocessor.load_audio(file_path)
@@ -166,38 +180,61 @@ def prepare_training_data(data_dir):
                 continue
     X = np.array(X)
     y = np.array(y)
+    print("Samples per class:", class_counts)
     if len(X) == 0 or len(y) == 0:
         print("No valid audio files processed")
         return X, y
     print(f"Loaded {len(X)} samples across {len(np.unique(y))} classes")
     return X, y
 
+def plot_training_history(history):
+    plt.figure(figsize=(12, 4))
+    plt.subplot(1, 2, 1)
+    plt.plot(history.history['accuracy'], label='Train Accuracy')
+    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+    plt.title('Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.subplot(1, 2, 2)
+    plt.plot(history.history['loss'], label='Train Loss')
+    plt.plot(history.history['val_loss'], label='Validation Loss')
+    plt.title('Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.savefig('training_history.png')
+    plt.close()
+
 def main():
-   
     print("Loading training data...")
     X, y = prepare_training_data(TRAINING_DATA_DIR)
     if len(X) == 0:
-        print("Error: No valid training data found. ")
+        print("Error: No valid training data found.")
         return
 
-  
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
     print(f"Training samples: {len(X_train)}, Validation samples: {len(X_val)}")
+    print(f"Training spectrogram mean: {np.mean(X_train):.4f}, std: {np.std(X_train):.4f}")
+    print(f"Validation spectrogram mean: {np.mean(X_val):.4f}, std: {np.std(X_val):.4f}")
 
-  
     print("Training model...")
     model = KeystrokeCNN(input_shape=EXPECTED_INPUT_SHAPE)
-    history = model.train(X_train, y_train, X_val, y_val, epochs=70, batch_size=32)
+    history = model.train(X_train, y_train, X_val, y_val, epochs=50, batch_size=32)
 
-   
     model.save_model(MODEL_PATH)
     print(f"Training completed. Model saved as {MODEL_PATH}")
-
 
     final_train_acc = history.history['accuracy'][-1]
     final_val_acc = history.history['val_accuracy'][-1]
     print(f"Final training accuracy: {final_train_acc:.4f}")
     print(f"Final validation accuracy: {final_val_acc:.4f}")
+
+    print("Plotting training history...")
+    plot_training_history(history)
+    print("Training history plot saved as 'training_history.png'")
 
 if __name__ == "__main__":
     main()
