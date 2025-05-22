@@ -3,6 +3,16 @@ import shutil
 
 source_dir = 'validation_data'
 dest_dir = 'training_data'
+
+
+
+
+
+
+
+
+
+
 os.makedirs(dest_dir, exist_ok=True)
 
 
