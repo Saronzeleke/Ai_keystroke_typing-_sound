@@ -76,7 +76,7 @@ class AudioPreprocessor:
                 audio = np.pad(audio, (0, target_length - len(audio)), mode='constant')
             elif len(audio) > target_length:
                 audio = audio[:target_length]
-            if np.random.rand() < 0.5:  # 50% chance of augmentation
+            if np.random.rand() < 0.5:
                 audio += np.random.normal(0, 0.01, audio.shape)
                 audio = librosa.effects.pitch_shift(audio, sr=sr, n_steps=np.random.uniform(-1, 1))
             S = librosa.feature.melspectrogram(
