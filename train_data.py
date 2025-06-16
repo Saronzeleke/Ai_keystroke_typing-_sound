@@ -18,7 +18,7 @@ CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ['spa
 NUM_CLASSES = len(CLASSES)
 EXPECTED_INPUT_SHAPE = (N_MELS, 87, 1)
 TRAINING_DATA_DIR = "./training_data"
-MODEL_PATH = "keystroke_model.keras"
+MODEL_PATH = r"C:\Users\admin\Desktop\Ai_keystroke_typing-_sound\keystroke_model.h5"
 class AudioPreprocessor:
     @staticmethod
     def load_audio(file_path, sr=SAMPLE_RATE):
