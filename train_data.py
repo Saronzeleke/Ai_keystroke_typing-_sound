@@ -131,7 +131,8 @@ class KeystrokeCNN:
             validation_data=(X_val, y_val), 
             epochs=epochs, 
             batch_size=batch_size,
-            callbacks=[checkpoint_callback, early_stopping]
+            callbacks=[checkpoint_callback, early_stopping],
+            class_weight=class_weights_dict
         )
         return history
     def save_model(self, filepath):
