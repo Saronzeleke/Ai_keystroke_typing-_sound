@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from scipy import signal
 import noisereduce as nr
 import matplotlib.pyplot as plt
+from sklearn.utils.class_weight import compute_class_weight
 SAMPLE_RATE = 44100
 DURATION = 0.1
 N_MELS = 128
