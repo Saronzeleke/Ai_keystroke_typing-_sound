@@ -60,7 +60,7 @@ def record_realtime(class_name, sample_idx):
         print("Make a noise (e.g., rustle paper, human voice....) in 2 seconds...")
     else:
         print(f"Press the '{class_name}' key in 2 seconds...")
-    time.sleep(3)  # Allow time to prepare
+    time.sleep(3) 
 
     recorder = AudioRecorder()
     recorder.start_recording(max_duration=DURATION)
