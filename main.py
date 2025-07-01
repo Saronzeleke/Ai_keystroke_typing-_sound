@@ -239,15 +239,15 @@ class KeystrokeCNN:
     def build_model(self):
         model = models.Sequential([
             layers.Input(shape=self.input_shape),
-            layers.Conv2D(32, (3, 3), activation='relu', padding='same'),
+            layers.Conv2D(32, (3, 3), activation='relu', padding='same',kernel_regularizer=l2(0.01)),
             layers.BatchNormalization(),
             layers.MaxPooling2D((2, 2)),
             layers.Dropout(0.25),
-            layers.Conv2D(64, (3, 3), activation='relu', padding='same'),
+            layers.Conv2D(64, (3, 3), activation='relu', padding='same',kernel_regularizer=l2(0.01)),
             layers.BatchNormalization(),
             layers.MaxPooling2D((2, 2)),
             layers.Dropout(0.25),
-            layers.Conv2D(128, (3, 3), activation='relu', padding='same'),
+            layers.Conv2D(128, (3, 3), activation='relu', padding='same',kernel_regularizer=l2(0.01)),
             layers.BatchNormalization(),
             layers.MaxPooling2D((2, 2)),
             layers.Dropout(0.25),
