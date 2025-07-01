@@ -102,7 +102,7 @@ def main():
                 total_samples += 3
             else:
                 print(f"Failed to record {class_name}, sample {idx} after {max_attempts} attempts")
-            time.sleep(3)  # Pause between recordings
+            time.sleep(3)  
         print(f"Completed {SAMPLES_PER_CLASS} samples for '{class_name}'")
 
     print(f"\nTraining data created in {TRAINING_DATA_DIR}")
