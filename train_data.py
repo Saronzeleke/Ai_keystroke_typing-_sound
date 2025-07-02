@@ -85,7 +85,7 @@ class AudioPreprocessor:
             )
             S_dB = librosa.power_to_db(S, ref=np.max)
             target_time_steps = 87
-            
+            S[..., np.newaxis]
             if S_dB.shape[1] < target_time_steps:
                 S_dB = np.pad(S_dB, ((0, 0), (0, target_time_steps - S_dB.shape[1])), mode='constant')
             elif S_dB.shape[1] > target_time_steps:
