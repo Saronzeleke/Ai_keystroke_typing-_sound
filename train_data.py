@@ -96,6 +96,7 @@ class AudioPreprocessor:
             spec = tf.convert_to_tensor(S_dB, dtype=tf.float32)
             augmenter = SpecAugment(freq_mask_param=10, time_mask_param=10)
             spec = augmenter(spec)
+            S_dB = augmenter(S_dB)
             S_dB = spec.numpy()
             target_time_steps = 87
             S[..., np.newaxis]
