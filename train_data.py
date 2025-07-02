@@ -140,6 +140,7 @@ class KeystrokeCNN:
         return history
     def save_model(self, filepath):
         self.model.save(filepath)
+        self.model.save(MODEL_PATH)
         print(f"Model saved to {filepath}")
 def prepare_training_data(data_dir):
     class_counts = {label: 0 for label in CLASSES}
