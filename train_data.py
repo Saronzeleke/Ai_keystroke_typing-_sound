@@ -97,8 +97,7 @@ class AudioPreprocessor:
             S_dB = librosa.power_to_db(S, ref=np.max)
             S_dB = augmenter(S_dB) 
             spec = tf.convert_to_tensor(S_dB, dtype=tf.float32)
-            spec = tfio.audio.freq_mask(spec, param=10)  # mask up to 10 freq bins
-            spec = tfio.audio.time_mask(spec, param=10)  # mask up to 10 time steps
+        
             S_dB = spec.numpy()
             target_time_steps = 87
             S[..., np.newaxis]
