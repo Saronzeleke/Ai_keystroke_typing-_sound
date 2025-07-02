@@ -125,7 +125,7 @@ class KeystrokeCNN:
                       loss='sparse_categorical_crossentropy', 
                       metrics=['accuracy'])
         return model
-    def train(self, X_train, y_train, X_val, y_val, epochs=50, batch_size=32):
+    def train(self, X_train, y_train, X_val, y_val, epochs=100, batch_size=32):
         class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
         class_weights_dict = dict(enumerate(class_weights))
         checkpoint_callback = ModelCheckpoint(MODEL_PATH, save_best_only=True, monitor='val_loss', mode='min')
