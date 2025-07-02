@@ -14,6 +14,7 @@ from scipy import signal
 import noisereduce as nr
 import matplotlib.pyplot as plt
 from sklearn.utils.class_weight import compute_class_weight
+import joblib
 
 SAMPLE_RATE = 44100
 DURATION = 0.1
@@ -170,9 +171,9 @@ class SimpleCNN:
         )
         return history
 
-def test_random_forest(X_train, X_val, y_train, y_val):
+def train_optimized_random_forest(X_train, X_val, y_train, y_val):
     print("\n" + "="*50)
-    print("TESTING RANDOM FOREST")
+    print("TRAINING OPTIMIZED RANDOM FOREST MODEL")
     print("="*50)
     
     # Flatten spectrograms for RF
@@ -181,35 +182,61 @@ def test_random_forest(X_train, X_val, y_train, y_val):
     
     print(f"Training RF with {X_train_flat.shape[0]} samples, {X_train_flat.shape[1]} features")
     
-    # Train Random Forest
-    rf = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1, max_depth=10)
-    rf.fit(X_train_flat, y_train)
+    # Feature selection - remove low variance features
+    from sklearn.feature_selection import VarianceThreshold
+    selector = VarianceThreshold(threshold=0.1)
+    X_train_selected = selector.fit_transform(X_train_flat)
+    X_val_selected = selector.transform(X_val_flat)
+    
+    print(f"After feature selection: {X_train_selected.shape[1]} features (removed {X_train_flat.shape[1] - X_train_selected.shape[1]})")
+    
+    # Optimized Random Forest with better parameters
+    rf_optimized = RandomForestClassifier(
+        n_estimators=200,          # More trees
+        max_depth=15,              # Deeper trees
+        min_samples_split=5,       # More samples required to split
+        min_samples_leaf=2,        # Minimum samples in leaf
+        max_features='sqrt',       # Use sqrt of features per tree
+        bootstrap=True,
+        random_state=42,
+        n_jobs=-1,
+        class_weight='balanced'    # Handle class imbalance
+    )
+    
+    rf_optimized.fit(X_train_selected, y_train)
     
     # Predict
-    y_pred = rf.predict(X_val_flat)
+    y_pred = rf_optimized.predict(X_val_selected)
     accuracy = accuracy_score(y_val, y_pred)
     
-    print(f"\nRANDOM FOREST RESULTS:")
+    print(f"\nOPTIMIZED RANDOM FOREST RESULTS:")
     print(f"Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%)")
     
-    if accuracy > 0.15:
-        print("✅ GOOD NEWS: RF accuracy > 15% - Your audio preprocessing is working!")
-        print("   The problem was likely with the CNN architecture/training.")
-    elif accuracy > 0.05:
-        print("⚠️  MODERATE: RF accuracy 5-15% - Some signal in data but needs improvement.")
-        print("   Check audio preprocessing and data quality.")
-    else:
-        print("❌ BAD NEWS: RF accuracy < 5% - Major issues with audio preprocessing.")
-        print("   Your audio features are not discriminative enough.")
+    # Detailed performance analysis
+    from sklearn.metrics import classification_report
+    print(f"\nDetailed Classification Report:")
+    print(classification_report(y_val, y_pred, target_names=[CLASSES[i] for i in sorted(set(y_val))], zero_division=0))
     
-    # Show per-class performance for top classes
-    print(f"\nTop 10 feature importances:")
-    feature_importance = rf.feature_importances_
-    top_features = np.argsort(feature_importance)[-10:]
+    # Feature importance analysis
+    print(f"\nTop 15 most important features:")
+    feature_importance = rf_optimized.feature_importances_
+    top_features = np.argsort(feature_importance)[-15:]
     for i, feat_idx in enumerate(top_features):
-        print(f"  Feature {feat_idx}: {feature_importance[feat_idx]:.4f}")
+        mel_bin = feat_idx // 44  # Assuming 44 time steps
+        time_step = feat_idx % 44
+        print(f"  Feature {feat_idx} (Mel bin {mel_bin}, Time {time_step}): {feature_importance[feat_idx]:.4f}")
     
-    return rf, accuracy
+    # Class-wise accuracy
+    from sklearn.metrics import confusion_matrix
+    cm = confusion_matrix(y_val, y_pred)
+    class_accuracies = cm.diagonal() / cm.sum(axis=1)
+    print(f"\nPer-class accuracies (top 10):")
+    best_classes = np.argsort(class_accuracies)[-10:]
+    for class_idx in best_classes:
+        if class_idx < len(CLASSES):
+            print(f"  {CLASSES[class_idx]}: {class_accuracies[class_idx]:.4f}")
+    
+    return rf_optimized, selector, accuracy
 
 def prepare_training_data(data_dir):
     class_counts = {label: 0 for label in CLASSES}
@@ -326,47 +353,34 @@ def main():
     print(f"Training data mean: {np.mean(X_train):.4f}, std: {np.std(X_train):.4f}")
     print(f"Validation data mean: {np.mean(X_val):.4f}, std: {np.std(X_val):.4f}")
     
-    # Test Random Forest first
-    rf_model, rf_accuracy = test_random_forest(X_train, X_val, y_train, y_val)
+    # Train Optimized Random Forest as primary model
+    rf_model, selector, rf_accuracy = train_optimized_random_forest(X_train, X_val, y_train, y_val)
     
-    # Train CNN
-    print("\n" + "="*50)
-    print("TRAINING IMPROVED CNN")
-    print("="*50)
-    
-    model = SimpleCNN(input_shape=EXPECTED_INPUT_SHAPE)
-    print(f"Model input shape: {EXPECTED_INPUT_SHAPE}")
-    model.model.summary()
-    
-    history = model.train(X_train, y_train, X_val, y_val, epochs=50, batch_size=32)
-    
-    # Results
-    final_train_acc = history.history["accuracy"][-1]
-    final_val_acc = history.history["val_accuracy"][-1]
+    # Save the Random Forest model and feature selector
+    import joblib
+    joblib.dump(rf_model, "keystroke_rf_model.pkl")
+    joblib.dump(selector, "feature_selector.pkl")
+    print(f"\nRandom Forest model saved as: keystroke_rf_model.pkl")
+    print(f"Feature selector saved as: feature_selector.pkl")
     
     print(f"\n" + "="*50)
     print("FINAL RESULTS")
     print("="*50)
-    print(f"Random Forest Accuracy: {rf_accuracy:.4f} ({rf_accuracy*100:.2f}%)")
-    print(f"CNN Training Accuracy: {final_train_acc:.4f} ({final_train_acc*100:.2f}%)")
-    print(f"CNN Validation Accuracy: {final_val_acc:.4f} ({final_val_acc*100:.2f}%)")
+    print(f"Optimized Random Forest Accuracy: {rf_accuracy:.4f} ({rf_accuracy*100:.2f}%)")
     
-    # Analysis
-    if rf_accuracy > 0.15 and final_val_acc < 0.10:
-        print("\n🔍 ANALYSIS: RF works but CNN doesn't - CNN architecture issue")
-    elif rf_accuracy < 0.05 and final_val_acc < 0.05:
-        print("\n🔍 ANALYSIS: Both models fail - audio preprocessing issue")
-    elif final_val_acc > rf_accuracy:
-        print("\n🔍 ANALYSIS: CNN works better - good!")
+    # Analysis and recommendations
+    if rf_accuracy > 0.25:
+        print("\n✅ EXCELLENT: >25% accuracy - Model is working well!")
+        print("   Ready for deployment and real-world testing.")
+    elif rf_accuracy > 0.15:
+        print("\n✅ GOOD: 15-25% accuracy - Decent performance for 39 classes.")
+        print("   Consider collecting more data for challenging classes.")
+    elif rf_accuracy > 0.10:
+        print("\n⚠️  MODERATE: 10-15% accuracy - Some signal but needs improvement.")
+        print("   Check audio quality and consider feature engineering.")
     else:
-        print("\n🔍 ANALYSIS: Need further investigation")
-    
-    # Save model
-    model.model.save(MODEL_PATH)
-    print(f"\nModel saved as: {MODEL_PATH}")
-    
-    # Plot results
-    plot_training_history(history)
+        print("\n❌ POOR: <10% accuracy - Major issues need addressing.")
+        print("   Review audio preprocessing and data collection process.")
     
     print("\n" + "="*50)
     print("RECOMMENDATIONS:")
