@@ -12,6 +12,9 @@ from scipy import signal
 import noisereduce as nr
 import matplotlib.pyplot as plt
 from sklearn.utils.class_weight import compute_class_weight
+from spec_augment import SpecAugment
+augmenter = SpecAugment(freq_mask_param=15, time_mask_param=20, n_freq_mask=2, n_time_mask=2)
+
 SAMPLE_RATE = 44100
 DURATION = 0.1
 N_MELS = 128
