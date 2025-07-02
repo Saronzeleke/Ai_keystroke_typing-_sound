@@ -102,9 +102,6 @@ class AudioPreprocessor:
         except Exception as e:
             print(f"Error creating spectrogram: {e}")
             return None
-        S_tf = tf.convert_to_tensor(S_dB, dtype=tf.float32)
-S_tf = tfio.audio.freq_mask(S_tf, param=10)
-S_tf = tfio.audio.time_mask(S_tf, param=10)
 class KeystrokeCNN:
     def __init__(self, input_shape=EXPECTED_INPUT_SHAPE, num_classes=NUM_CLASSES):
         self.input_shape = input_shape
