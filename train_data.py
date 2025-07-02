@@ -114,7 +114,7 @@ class KeystrokeCNN:
             layers.BatchNormalization(),
             layers.MaxPooling2D((2, 2)),
             layers.Dropout(0.5),
-            layers.Flatten(),
+            # layers.Flatten(),
             layers.GlobalAveragePooling2D(),
             layers.Dense(256, activation='relu', kernel_regularizer=l2(0.01)),
             layers.BatchNormalization(),
