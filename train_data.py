@@ -94,7 +94,7 @@ class AudioPreprocessor:
             )
             S_dB = librosa.power_to_db(S, ref=np.max)
             spec = tf.convert_to_tensor(S_dB, dtype=tf.float32)
-            # augmenter = SpecAugment(freq_mask_param=10, time_mask_param=10)
+            augmenter = SpecAugment(freq_mask_param=10, time_mask_param=10)
             spec = augmenter(spec)
             S_dB = augmenter(S_dB)
             S_dB = spec.numpy()
