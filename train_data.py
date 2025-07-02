@@ -122,7 +122,7 @@ class KeystrokeCNN:
             layers.Dropout(0.3),
             layers.Dense(self.num_classes, activation='softmax')
         ])
-        model.compile(optimizer=Adam(learning_rate=0.0001), 
+        model.compile(optimizer=Adam(learning_rate=0.001), 
                       loss='sparse_categorical_crossentropy', 
                       metrics=['accuracy'])
         return model
