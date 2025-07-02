@@ -72,6 +72,13 @@ class AudioPreprocessor:
     @staticmethod
     def create_mel_spectrogram(audio, sr=SAMPLE_RATE, n_mels=N_MELS, pitch_shift_range=(-2, 2), time_stretch_range=(0.8, 1.2)):
         try:
+            # Apply pitch shifting
+            pitch_shift = np.random.uniform(*pitch_shift_range)
+            audio = librosa.effects.pitch_shift(audio, sr=sr, n_steps=pitch_shift)
+
+            # Apply time stretching
+            stretch_rate = np.random.uniform(*time_stretch_range)
+            audio = librosa.effects.time_stretch(audio, rate=stretch_rate)
             target_length = int(DURATION * sr)
             if len(audio) < target_length:
                 audio = np.pad(audio, (0, target_length - len(audio)), mode='constant')
