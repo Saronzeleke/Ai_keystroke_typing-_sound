@@ -215,7 +215,6 @@ def main():
     model = KeystrokeCNN(input_shape=EXPECTED_INPUT_SHAPE)
     history = model.train(X_train, y_train, X_val, y_val, epochs=100, batch_size=32)
     model.save_model(MODEL_PATH)
-    model.save(MODEL_PATH)
     print(f"Training completed. Model saved as {MODEL_PATH}")
     final_train_acc = history.history['accuracy'][-1]
     final_val_acc = history.history['val_accuracy'][-1]
