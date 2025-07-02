@@ -1,6 +1,8 @@
 import os
 import numpy as np
 import librosa
+import tensorflow_io as tfio
+import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from tensorflow.keras.optimizers import Adam
@@ -91,11 +93,10 @@ class AudioPreprocessor:
                 y=audio, sr=sr, n_mels=n_mels, n_fft=FFT_WINDOW, hop_length=HOP_LENGTH
             )
             S_dB = librosa.power_to_db(S, ref=np.max)
-            import tensorflow as tf
-spec = tf.convert_to_tensor(S_dB, dtype=tf.float32)
-spec = tfio.audio.freq_mask(spec, param=10)  # mask up to 10 freq bins
-spec = tfio.audio.time_mask(spec, param=10)  # mask up to 10 time steps
-S_dB = spec.numpy()
+            spec = tf.convert_to_tensor(S_dB, dtype=tf.float32)
+            spec = tfio.audio.freq_mask(spec, param=10)  # mask up to 10 freq bins
+            spec = tfio.audio.time_mask(spec, param=10)  # mask up to 10 time steps
+            S_dB = spec.numpy()
             target_time_steps = 87
             S[..., np.newaxis]
             if S_dB.shape[1] < target_time_steps:
