@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import librosa
-import tensorflow_io as tfio
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
@@ -96,6 +95,7 @@ class AudioPreprocessor:
                 y=audio, sr=sr, n_mels=n_mels, n_fft=FFT_WINDOW, hop_length=HOP_LENGTH
             )
             S_dB = librosa.power_to_db(S, ref=np.max)
+            S_dB = augmenter(S_dB) 
             spec = tf.convert_to_tensor(S_dB, dtype=tf.float32)
             spec = tfio.audio.freq_mask(spec, param=10)  # mask up to 10 freq bins
             spec = tfio.audio.time_mask(spec, param=10)  # mask up to 10 time steps
