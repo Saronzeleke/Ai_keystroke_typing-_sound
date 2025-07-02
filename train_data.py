@@ -3,7 +3,7 @@ import numpy as np
 import librosa
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l2
 from sklearn.model_selection import train_test_split
@@ -12,18 +12,16 @@ import noisereduce as nr
 import matplotlib.pyplot as plt
 from sklearn.utils.class_weight import compute_class_weight
 from spec_augment import SpecAugment
-
 SAMPLE_RATE = 44100
 DURATION = 0.1
 N_MELS = 128
 FFT_WINDOW = 1024
 HOP_LENGTH = 512
-CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ["space", "enter", "noise"]
+CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ['space', 'enter', 'noise']
 NUM_CLASSES = len(CLASSES)
 EXPECTED_INPUT_SHAPE = (N_MELS, 87, 1)
 TRAINING_DATA_DIR = "./training_data"
 MODEL_PATH = "keystroke_model.keras"
-
 class AudioPreprocessor:
     @staticmethod
     def load_audio(file_path, sr=SAMPLE_RATE):
@@ -34,7 +32,6 @@ class AudioPreprocessor:
         except Exception as e:
             print(f"Error loading audio {file_path}: {e}")
             raise
-
     @staticmethod
     def reduce_noise(audio, sr=SAMPLE_RATE):
         try:
@@ -52,7 +49,6 @@ class AudioPreprocessor:
         except Exception as e:
             print(f"Error reducing noise: {e}")
             return audio
-
     @staticmethod
     def extract_keystroke(audio, sr=SAMPLE_RATE, threshold=0.05, min_silence=0.05):
         try:
@@ -67,7 +63,7 @@ class AudioPreprocessor:
             segment = audio[start:end]
             target_length = int(DURATION * sr)
             if len(segment) < target_length:
-                segment = np.pad(segment, (0, target_length - len(segment)), mode="constant")
+                segment = np.pad(segment, (0, target_length - len(segment)), mode='constant')
             elif len(segment) > target_length:
                 segment = segment[:target_length]
             print(f"Extracted keystroke, length: {len(segment)} samples")
@@ -75,117 +71,93 @@ class AudioPreprocessor:
         except Exception as e:
             print(f"Error extracting keystroke: {e}")
             return None
-
     @staticmethod
-    def create_mel_spectrogram(audio, sr=SAMPLE_RATE, n_mels=N_MELS, apply_augmentation=False):
+    def create_mel_spectrogram(audio, sr=SAMPLE_RATE, n_mels=N_MELS, pitch_shift_range=(-2, 2), time_stretch_range=(0.8, 1.2)):
         try:
-            if apply_augmentation:
-                # Apply pitch shifting
-                pitch_shift = np.random.uniform(-2, 2)
-                audio = librosa.effects.pitch_shift(audio, sr=sr, n_steps=pitch_shift)
+            # Apply pitch shifting
+            pitch_shift = np.random.uniform(*pitch_shift_range)
+            audio = librosa.effects.pitch_shift(audio, sr=sr, n_steps=pitch_shift)
 
-                # Apply time stretching
-                stretch_rate = np.random.uniform(0.8, 1.2)
-                audio = librosa.effects.time_stretch(audio, rate=stretch_rate)
-
-                # Add random noise
-                if np.random.rand() < 0.5:
-                    audio += np.random.normal(0, 0.01, audio.shape)
-
+            # Apply time stretching
+            stretch_rate = np.random.uniform(*time_stretch_range)
+            audio = librosa.effects.time_stretch(audio, rate=stretch_rate)
             target_length = int(DURATION * sr)
             if len(audio) < target_length:
-                audio = np.pad(audio, (0, target_length - len(audio)), mode="constant")
+                audio = np.pad(audio, (0, target_length - len(audio)), mode='constant')
             elif len(audio) > target_length:
                 audio = audio[:target_length]
-
+            if np.random.rand() < 0.5:
+                audio += np.random.normal(0, 0.01, audio.shape)
+                audio = librosa.effects.pitch_shift(audio, sr=sr, n_steps=np.random.uniform(-1, 1))
             S = librosa.feature.melspectrogram(
                 y=audio, sr=sr, n_mels=n_mels, n_fft=FFT_WINDOW, hop_length=HOP_LENGTH
             )
             S_dB = librosa.power_to_db(S, ref=np.max)
-
-            if apply_augmentation:
-                spec = tf.convert_to_tensor(S_dB, dtype=tf.float32)
-                augmenter = SpecAugment(freq_mask_param=10, time_mask_param=10)
-                spec = augmenter(spec)
-                S_dB = spec.numpy()
-
+            spec = tf.convert_to_tensor(S_dB, dtype=tf.float32)
+            augmenter = SpecAugment(freq_mask_param=10, time_mask_param=10)
+            spec = augmenter(spec)
+            S_dB = spec.numpy()
             target_time_steps = 87
+            S[..., np.newaxis]
             if S_dB.shape[1] < target_time_steps:
-                S_dB = np.pad(S_dB, ((0, 0), (0, target_time_steps - S_dB.shape[1])), mode="constant")
+                S_dB = np.pad(S_dB, ((0, 0), (0, target_time_steps - S_dB.shape[1])), mode='constant')
             elif S_dB.shape[1] > target_time_steps:
                 S_dB = S_dB[:, :target_time_steps]
-
             print(f"Spectrogram shape: {S_dB.shape}")
             return np.expand_dims(S_dB, axis=-1)
         except Exception as e:
             print(f"Error creating spectrogram: {e}")
             return None
-
 class KeystrokeCNN:
     def __init__(self, input_shape=EXPECTED_INPUT_SHAPE, num_classes=NUM_CLASSES):
         self.input_shape = input_shape
         self.num_classes = num_classes
         self.model = self.build_model()
-
     def build_model(self):
         model = models.Sequential([
             layers.Input(shape=self.input_shape),
-            layers.Conv2D(32, (3, 3), activation="relu", padding="same", kernel_regularizer=l2(1e-4)),
+            layers.Conv2D(32, (3, 3), activation='relu', padding='same',kernel_regularizer=l2(1e-4)),
             layers.BatchNormalization(),
             layers.MaxPooling2D((2, 2)),
             layers.Dropout(0.3),
-
-            layers.Conv2D(64, (3, 3), activation="relu", padding="same"),
+            layers.Conv2D(64, (3, 3), activation='relu', padding='same'),
             layers.BatchNormalization(),
             layers.MaxPooling2D((2, 2)),
             layers.Dropout(0.3),
-
-            layers.Conv2D(128, (3, 3), activation="relu", padding="same"),
+            layers.Conv2D(128, (3, 3), activation='relu', padding='same'),
             layers.BatchNormalization(),
             layers.MaxPooling2D((2, 2)),
             layers.Dropout(0.3),
-
-            layers.Conv2D(256, (3, 3), activation="relu", padding="same"), # Added layer
-            layers.BatchNormalization(),
-            layers.MaxPooling2D((2, 2)),
-            layers.Dropout(0.4), # Increased dropout
-
             layers.GlobalAveragePooling2D(),
-            layers.Dense(512, activation="relu"),
+            layers.Dense(512, activation='relu'),
             layers.BatchNormalization(),
-            layers.Dropout(0.4), # Increased dropout
-
-            layers.Dense(256, activation="relu", kernel_regularizer=l2(1e-4)),
+            layers.Dropout(0.3),
+            layers.Dense(256, activation='relu',kernel_regularizer=l2(1e-4)),
             layers.BatchNormalization(),
-            layers.Dropout(0.4), # Increased dropout
-
-            layers.Dense(self.num_classes, activation="softmax")
+            layers.Dropout(0.3),
+            layers.Dense(self.num_classes, activation='softmax')
         ])
-        model.compile(optimizer=Adam(learning_rate=0.0001),
-                      loss="sparse_categorical_crossentropy",
-                      metrics=["accuracy"])
+        model.compile(optimizer=Adam(learning_rate=0.0001), 
+                      loss='sparse_categorical_crossentropy', 
+                      metrics=['accuracy'])
         return model
-
     def train(self, X_train, y_train, X_val, y_val, epochs=100, batch_size=32):
-        class_weights = compute_class_weight("balanced", classes=np.unique(y_train), y=y_train)
+        class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
         class_weights_dict = dict(enumerate(class_weights))
-        checkpoint_callback = ModelCheckpoint(MODEL_PATH, save_best_only=True, monitor="val_loss", mode="min")
-        early_stopping = EarlyStopping(monitor="val_loss", patience=10, restore_best_weights=True)
-        reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=0.00001)
+        checkpoint_callback = ModelCheckpoint(MODEL_PATH, save_best_only=True, monitor='val_loss', mode='min')
+        early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
         history = self.model.fit(
-            X_train, y_train,
-            validation_data=(X_val, y_val),
-            epochs=epochs,
+            X_train, y_train, 
+            validation_data=(X_val, y_val), 
+            epochs=epochs, 
             batch_size=batch_size,
-            callbacks=[checkpoint_callback, early_stopping, reduce_lr],
+            callbacks=[checkpoint_callback, early_stopping],
             class_weight=class_weights_dict
         )
         return history
-
     def save_model(self, filepath):
         self.model.save(filepath)
         print(f"Model saved to {filepath}")
-
 def prepare_training_data(data_dir):
     class_counts = {label: 0 for label in CLASSES}
     X, y = [], []
@@ -197,7 +169,7 @@ def prepare_training_data(data_dir):
         label_dir = os.path.join(data_dir, label)
         if not os.path.isdir(label_dir):
             continue
-        files = [f for f in os.listdir(label_dir) if f.endswith(".wav")]
+        files = [f for f in os.listdir(label_dir) if f.endswith('.wav')]
         class_counts[label] = len(files)
         for file in files:
             file_path = os.path.join(label_dir, file)
@@ -208,7 +180,7 @@ def prepare_training_data(data_dir):
                 if keystroke is None:
                     print(f"Skipping {file_path}: no keystroke detected")
                     continue
-                spectrogram = AudioPreprocessor.create_mel_spectrogram(keystroke, apply_augmentation=True) # Changed to True for train_data.py
+                spectrogram = AudioPreprocessor.create_mel_spectrogram(keystroke)
                 if spectrogram is None:
                     continue
                 X.append(spectrogram)
@@ -225,56 +197,47 @@ def prepare_training_data(data_dir):
         return X, y
     print(f"Loaded {len(X)} samples across {len(np.unique(y))} classes")
     return X, y
-
 def plot_training_history(history):
     plt.figure(figsize=(12, 4))
     plt.subplot(1, 2, 1)
-    plt.plot(history.history["accuracy"], label="Train Accuracy")
-    plt.plot(history.history["val_accuracy"], label="Validation Accuracy")
-    plt.title("Accuracy")
-    plt.xlabel("Epoch")
-    plt.ylabel("Accuracy")
+    plt.plot(history.history['accuracy'], label='Train Accuracy')
+    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+    plt.title('Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
     plt.legend()
-
     plt.subplot(1, 2, 2)
-    plt.plot(history.history["loss"], label="Train Loss")
-    plt.plot(history.history["val_loss"], label="Validation Loss")
-    plt.title("Loss")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
+    plt.plot(history.history['loss'], label='Train Loss')
+    plt.plot(history.history['val_loss'], label='Validation Loss')
+    plt.title('Loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
     plt.legend()
-    plt.savefig("training_history.png")
+    plt.savefig('training_history.png')
     plt.close()
-
 def main():
     print("Loading training data...")
     X, y = prepare_training_data(TRAINING_DATA_DIR)
     if len(X) == 0:
         print("Error: No valid training data found.")
         return
-
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
     print(f"Training samples: {len(X_train)}, Validation samples: {len(X_val)}")
     print(f"Training spectrogram mean: {np.mean(X_train):.4f}, std: {np.std(X_train):.4f}")
     print(f"Validation spectrogram mean: {np.mean(X_val):.4f}, std: {np.std(X_val):.4f}")
-
     print("Training model...")
     model = KeystrokeCNN(input_shape=EXPECTED_INPUT_SHAPE)
     history = model.train(X_train, y_train, X_val, y_val, epochs=100, batch_size=32)
     model.save_model(MODEL_PATH)
     print(f"Training completed. Model saved as {MODEL_PATH}")
-
-    final_train_acc = history.history["accuracy"][-1]
-    final_val_acc = history.history["val_accuracy"][-1]
+    final_train_acc = history.history['accuracy'][-1]
+    final_val_acc = history.history['val_accuracy'][-1]
     print(f"Final training accuracy: {final_train_acc:.4f}")
     print(f"Final validation accuracy: {final_val_acc:.4f}")
-
     print("Plotting training history...")
     plot_training_history(history)
     print("Training history plot saved as 'training_history.png'")
-
 if __name__ == "__main__":
     main()
-
