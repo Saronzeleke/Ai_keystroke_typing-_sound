@@ -117,6 +117,7 @@ class KeystrokeCNN:
     def build_model(self):
         model = models.Sequential([
             layers.Input(shape=self.input_shape),
+            SpecAugment(freq_mask_param=8, time_mask_param=8),
             layers.Conv2D(32, (3, 3), activation='relu', padding='same',kernel_regularizer=l2(1e-4)),
             layers.BatchNormalization(),
             layers.MaxPooling2D((2, 2)),
