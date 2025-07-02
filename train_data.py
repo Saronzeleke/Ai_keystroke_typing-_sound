@@ -110,7 +110,7 @@ class KeystrokeCNN:
             layers.Conv2D(64, (3, 3), activation='relu', padding='same'),
             layers.BatchNormalization(),
             layers.MaxPooling2D((2, 2)),
-            layers.Dropout(0.4),
+            layers.Dropout(0.2),
             layers.Conv2D(128, (3, 3), activation='relu', padding='same'),
             layers.BatchNormalization(),
             layers.MaxPooling2D((2, 2)),
@@ -119,7 +119,7 @@ class KeystrokeCNN:
             layers.Flatten(),
             layers.Dense(256, activation='relu'),
             layers.BatchNormalization(),
-            layers.Dropout(0.6),
+            layers.Dropout(0.3),
             layers.Dense(self.num_classes, activation='softmax')
         ])
         model.compile(optimizer=Adam(learning_rate=0.0001), 
@@ -130,7 +130,7 @@ class KeystrokeCNN:
         class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
         class_weights_dict = dict(enumerate(class_weights))
         checkpoint_callback = ModelCheckpoint(MODEL_PATH, save_best_only=True, monitor='val_loss', mode='min')
-        early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
         history = self.model.fit(
             X_train, y_train, 
             validation_data=(X_val, y_val), 
