@@ -133,7 +133,7 @@ class KeystrokeCNN:
             layers.Dense(512, activation='relu'),
             layers.BatchNormalization(),
             layers.Dropout(0.3),
-            layers.Dense(256, activation='relu'),
+            layers.Dense(256, activation='relu',kernel_regularizer=l2(1e-4)),
             layers.BatchNormalization(),
             layers.Dropout(0.3),
             layers.Dense(self.num_classes, activation='softmax')
