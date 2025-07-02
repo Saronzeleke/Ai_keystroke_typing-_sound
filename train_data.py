@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from sklearn.utils.class_weight import compute_class_weight
 SAMPLE_RATE = 44100
 DURATION = 0.1
-N_MELS = 12
+N_MELS = 128
 FFT_WINDOW = 1024
 HOP_LENGTH = 512
 CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ['space', 'enter', 'noise']
