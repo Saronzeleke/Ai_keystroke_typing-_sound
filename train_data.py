@@ -93,7 +93,6 @@ class AudioPreprocessor:
                 y=audio, sr=sr, n_mels=n_mels, n_fft=FFT_WINDOW, hop_length=HOP_LENGTH
             )
             S_dB = librosa.power_to_db(S, ref=np.max)
-            S_dB = augmenter(S_dB) 
             spec = tf.convert_to_tensor(S_dB, dtype=tf.float32)
             augmenter = SpecAugment(freq_mask_param=10, time_mask_param=10)
             spec = augmenter(spec)
