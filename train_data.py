@@ -12,8 +12,6 @@ import noisereduce as nr
 import matplotlib.pyplot as plt
 from sklearn.utils.class_weight import compute_class_weight
 from spec_augment import SpecAugment
-augmenter = SpecAugment(freq_mask_param=15, time_mask_param=20, n_freq_mask=2, n_time_mask=2)
-
 SAMPLE_RATE = 44100
 DURATION = 0.1
 N_MELS = 128
@@ -97,7 +95,8 @@ class AudioPreprocessor:
             S_dB = librosa.power_to_db(S, ref=np.max)
             S_dB = augmenter(S_dB) 
             spec = tf.convert_to_tensor(S_dB, dtype=tf.float32)
-        
+            augmenter = SpecAugment(freq_mask_param=10, time_mask_param=10)
+            spec = augmenter(spec)
             S_dB = spec.numpy()
             target_time_steps = 87
             S[..., np.newaxis]
