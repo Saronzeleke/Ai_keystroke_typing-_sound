@@ -70,7 +70,7 @@ class AudioPreprocessor:
             print(f"Error extracting keystroke: {e}")
             return None
     @staticmethod
-    def create_mel_spectrogram(audio, sr=SAMPLE_RATE, n_mels=N_MELS):
+    def create_mel_spectrogram(audio, sr=SAMPLE_RATE, n_mels=N_MELS pitch_shift_range=(-2, 2), time_stretch_range=(0.8, 1.2)):
         try:
             target_length = int(DURATION * sr)
             if len(audio) < target_length:
