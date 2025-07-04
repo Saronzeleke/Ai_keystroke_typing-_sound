@@ -1,1 +1,3 @@
 my_env3.10/
+.venv/
+.pyc
