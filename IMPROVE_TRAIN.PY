@@ -8,22 +8,22 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l2
 from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
-from scipy import signal 
+from scipy import signal
 import noisereduce as nr
 import matplotlib.pyplot as plt
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
-from spec_augument import SpecAugment
+from spec_augment import SpecAugment
 
 SAMPLE_RATE = 44100
-DURATION = 0.15
+DURATION = 0.2
 N_MELS = 256
-FFT_WINDOW = 1024
+FFT_WINDOW = 2048
 HOP_LENGTH = 256
-CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ['space', 'enter', 'noise']
+CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ["space", "enter", "noise"]
 NUM_CLASSES = len(CLASSES)
-EXPECTED_INPUT_SHAPE = (N_MELS, 129, 1)
+EXPECTED_INPUT_SHAPE = (N_MELS + 40, 173, 1)
 TRAINING_DATA_DIR = "./training_data"
 MODEL_PATH = "keystroke_model.keras"
 
@@ -37,7 +37,7 @@ class AudioPreprocessor:
         except Exception as e:
             print(f"Error loading audio {file_path}: {e}")
             raise
-    
+
     @staticmethod
     def reduce_noise(audio, sr=SAMPLE_RATE):
         try:
@@ -55,7 +55,7 @@ class AudioPreprocessor:
         except Exception as e:
             print(f"Error reducing noise: {e}")
             return audio
-    
+
     @staticmethod
     def extract_keystroke(audio, sr=SAMPLE_RATE, threshold=0.05, min_silence=0.05):
         try:
@@ -65,12 +65,12 @@ class AudioPreprocessor:
                 print("No keystrokes detected in audio")
                 return None
             peak = peaks[0]
-            start = max(0, peak - int(0.05 * sr))
-            end = min(len(audio), peak + int(0.1 * sr))
+            start = max(0, peak - int(0.07 * sr))
+            end = min(len(audio), peak + int(0.13 * sr))
             segment = audio[start:end]
             target_length = int(DURATION * sr)
             if len(segment) < target_length:
-                segment = np.pad(segment, (0, target_length - len(segment)), mode='constant')
+                segment = np.pad(segment, (0, target_length - len(segment)), mode="constant")
             elif len(segment) > target_length:
                 segment = segment[:target_length]
             print(f"Extracted keystroke, length: {len(segment)} samples")
@@ -78,39 +78,44 @@ class AudioPreprocessor:
         except Exception as e:
             print(f"Error extracting keystroke: {e}")
             return None
-    
+
     @staticmethod
-    def create_mel_spectrogram(audio, sr=SAMPLE_RATE, n_mels=N_MELS, pitch_shift_range=(-1, 1), time_stretch_range=(0.9, 1.1)):
+    def create_mel_spectrogram(audio, sr=SAMPLE_RATE, n_mels=N_MELS, apply_augmentation=True):
         try:
-            pitch_shift = np.random.uniform(*pitch_shift_range)
-            audio = librosa.effects.pitch_shift(audio, sr=sr, n_steps=pitch_shift)
-            stretch_rate = np.random.uniform(*time_stretch_range)
-            audio = librosa.effects.time_stretch(audio, rate=stretch_rate)
+            if apply_augmentation:
+                pitch_shift = np.random.uniform(-0.5, 0.5)
+                audio = librosa.effects.pitch_shift(audio, sr=sr, n_steps=pitch_shift)
+                stretch_rate = np.random.uniform(0.95, 1.05)
+                audio = librosa.effects.time_stretch(audio, rate=stretch_rate)
+                if np.random.rand() < 0.2:
+                    audio += np.random.normal(0, 0.003, audio.shape)
             target_length = int(DURATION * sr)
             if len(audio) < target_length:
-                audio = np.pad(audio, (0, target_length - len(audio)), mode='constant')
+                audio = np.pad(audio, (0, target_length - len(audio)), mode="constant")
             elif len(audio) > target_length:
                 audio = audio[:target_length]
-            if np.random.rand() < 0.3:
-                audio += np.random.normal(0, 0.005, audio.shape)
             S = librosa.feature.melspectrogram(
                 y=audio, sr=sr, n_mels=n_mels, n_fft=FFT_WINDOW, hop_length=HOP_LENGTH
             )
             S_dB = librosa.power_to_db(S, ref=np.max)
-            S_dB = (S_dB - S_dB.min()) / (S_dB.max() - S_dB.min() + 1e-10)
-            spec = tf.convert_to_tensor(S_dB, dtype=tf.float32)
-            augmenter = SpecAugment(freq_mask_param=10, time_mask_param=10)
-            spec = augmenter(spec)
-            S_dB = spec.numpy()
-            target_time_steps = 129
-            if S_dB.shape[1] < target_time_steps:
-                S_dB = np.pad(S_dB, ((0, 0), (0, target_time_steps - S_dB.shape[1])), mode='constant')
-            elif S_dB.shape[1] > target_time_steps:
-                S_dB = S_dB[:, :target_time_steps]
-            print(f"Spectrogram shape: {S_dB.shape}")
-            return np.expand_dims(S_dB, axis=-1)
+            mfcc = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=40, n_fft=FFT_WINDOW, hop_length=HOP_LENGTH)
+            S_dB = (S_dB - np.mean(S_dB)) / (np.std(S_dB) + 1e-10)
+            mfcc = (mfcc - np.mean(mfcc)) / (np.std(mfcc) + 1e-10)
+            combined = np.concatenate((S_dB, mfcc), axis=0)
+            if apply_augmentation:
+                spec = tf.convert_to_tensor(combined, dtype=tf.float32)
+                augmenter = SpecAugment(freq_mask_param=10, time_mask_param=10)
+                spec = augmenter(spec)
+                combined = spec.numpy()
+            target_time_steps = 173
+            if combined.shape[1] < target_time_steps:
+                combined = np.pad(combined, ((0, 0), (0, target_time_steps - combined.shape[1])), mode="constant")
+            elif combined.shape[1] > target_time_steps:
+                combined = combined[:, :target_time_steps]
+            print(f"Feature shape: {combined.shape}")
+            return np.expand_dims(combined, axis=-1)
         except Exception as e:
-            print(f"Error creating spectrogram: {e}")
+            print(f"Error creating features: {e}")
             return None
 
 class KeystrokeCNN:
@@ -118,7 +123,7 @@ class KeystrokeCNN:
         self.input_shape = input_shape
         self.num_classes = num_classes
         self.model = self.build_model()
-    
+
     def build_model(self):
         inputs = layers.Input(shape=self.input_shape)
         
@@ -148,31 +153,34 @@ class KeystrokeCNN:
         
         x = layers.Conv2D(256, (3, 3), activation='relu', padding='same', kernel_regularizer=l2(1e-5))(x)
         x = layers.BatchNormalization()(x)
+        x = layers.MaxPooling2D((2, 2))(x)
+        x = layers.Dropout(0.4)(x)
+        
         x = layers.GlobalAveragePooling2D()(x)
         
-        x = layers.Dense(1024, activation='relu', kernel_regularizer=l2(1e-5))(x)
+        x = layers.Dense(2048, activation='relu', kernel_regularizer=l2(1e-5))(x)
         x = layers.BatchNormalization()(x)
         x = layers.Dropout(0.4)(x)
         
-        x = layers.Dense(512, activation='relu', kernel_regularizer=l2(1e-5))(x)
+        x = layers.Dense(1024, activation='relu', kernel_regularizer=l2(1e-5))(x)
         x = layers.BatchNormalization()(x)
         x = layers.Dropout(0.4)(x)
         
         outputs = layers.Dense(self.num_classes, activation='softmax')(x)
         
         model = models.Model(inputs, outputs)
-        model.compile(optimizer=Adam(learning_rate=0.0001), 
+        model.compile(optimizer=Adam(learning_rate=0.0005, clipnorm=1.0), 
                       loss='sparse_categorical_crossentropy', 
                       metrics=['accuracy'])
         return model
-    
-    def train(self, X_train, y_train, X_val, y_val, epochs=100, batch_size=16):
+
+    def train(self, X_train, y_train, X_val, y_val, epochs=200, batch_size=16):
         class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
         class_weights_dict = dict(enumerate(class_weights))
         
-        lr_scheduler = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=1e-6)
+        lr_scheduler = ReduceLROnPlateau(monitor='val_loss', factor=0.3, patience=5, min_lr=1e-6)
         checkpoint_callback = ModelCheckpoint(MODEL_PATH, save_best_only=True, monitor='val_loss', mode='min')
-        early_stopping = EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True)
+        early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
         
         history = self.model.fit(
             X_train, y_train, 
@@ -183,7 +191,7 @@ class KeystrokeCNN:
             class_weight=class_weights_dict
         )
         return history
-    
+
     def save_model(self, filepath):
         self.model.save(filepath)
         print(f"Model saved to {filepath}")
@@ -199,7 +207,7 @@ def prepare_training_data(data_dir):
         label_dir = os.path.join(data_dir, label)
         if not os.path.isdir(label_dir):
             continue
-        files = [f for f in os.listdir(label_dir) if f.endswith('.wav')]
+        files = [f for f in os.listdir(label_dir) if f.endswith(".wav")]
         class_counts[label] = len(files)
         for file in files:
             file_path = os.path.join(label_dir, file)
@@ -210,10 +218,10 @@ def prepare_training_data(data_dir):
                 if keystroke is None:
                     print(f"Skipping {file_path}: no keystroke detected")
                     continue
-                spectrogram = AudioPreprocessor.create_mel_spectrogram(keystroke)
-                if spectrogram is None:
+                features = AudioPreprocessor.create_mel_spectrogram(keystroke)
+                if features is None:
                     continue
-                X.append(spectrogram)
+                X.append(features)
                 y.append(class_idx)
                 print(f"Processed {file_path}, label: {label}")
             except Exception as e:
@@ -221,29 +229,45 @@ def prepare_training_data(data_dir):
                 continue
     X = np.array(X)
     y = np.array(y)
-    print("Samples per class:", class_counts)
+    print("Samples per class before balancing:", class_counts)
     if len(X) == 0 or len(y) == 0:
         print("No valid audio files processed")
         return X, y
     
-    # Oversampling
+    # Check for data imbalance
     max_samples = max(class_counts.values())
-    X_balanced, y_balanced = [], []
-    for class_idx in np.unique(y):
-        X_class = X[y == class_idx]
-        y_class = y[y == class_idx]
-        if len(X_class) < max_samples:
-            X_class_resampled, y_class_resampled = resample(
-                X_class, y_class, replace=True, n_samples=max_samples, random_state=42
-            )
-            X_balanced.append(X_class_resampled)
-            y_balanced.append(y_class_resampled)
-        else:
-            X_balanced.append(X_class)
-            y_balanced.append(y_class)
-    X = np.concatenate(X_balanced)
-    y = np.concatenate(y_balanced)
-    print(f"Balanced dataset: {len(X)} samples across {len(np.unique(y))} classes")
+    min_samples_threshold = 100
+    imbalance_threshold = 0.5 * max_samples
+    imbalanced = False
+    imbalanced_classes = []
+    for label, count in class_counts.items():
+        if count < imbalance_threshold or count < min_samples_threshold:
+            imbalanced = True
+            imbalanced_classes.append((label, count))
+    
+    if imbalanced:
+        print("Data imbalance detected. Imbalanced classes:", imbalanced_classes)
+        print("Balancing dataset...")
+        target_samples = max(max_samples, min_samples_threshold)
+        X_balanced, y_balanced = [], []
+        for class_idx in np.unique(y):
+            X_class = X[y == class_idx]
+            y_class = y[y == class_idx]
+            if len(X_class) < target_samples:
+                X_class_resampled, y_class_resampled = resample(
+                    X_class, y_class, replace=True, n_samples=target_samples, random_state=42
+                )
+                X_balanced.append(X_class_resampled)
+                y_balanced.append(y_class_resampled)
+            else:
+                X_balanced.append(X_class)
+                y_balanced.append(y_class)
+        X = np.concatenate(X_balanced)
+        y = np.concatenate(y_balanced)
+        print(f"Balanced dataset: {len(X)} samples across {len(np.unique(y))} classes")
+    else:
+        print("No significant data imbalance detected. Proceeding with original dataset.")
+    
     return X, y
 
 def plot_training_history(history):
@@ -275,12 +299,12 @@ def main():
         X, y, test_size=0.2, random_state=42, stratify=y
     )
     print(f"Training samples: {len(X_train)}, Validation samples: {len(X_val)}")
-    print(f"Training spectrogram mean: {np.mean(X_train):.4f}, std: {np.std(X_train):.4f}")
-    print(f"Validation spectrogram mean: {np.mean(X_val):.4f}, std: {np.std(X_val):.4f}")
+    print(f"Training feature mean: {np.mean(X_train):.4f}, std: {np.std(X_train):.4f}")
+    print(f"Validation feature mean: {np.mean(X_val):.4f}, std: {np.std(X_val):.4f}")
     
     print("Training model...")
     model = KeystrokeCNN(input_shape=EXPECTED_INPUT_SHAPE)
-    history = model.train(X_train, y_train, X_val, y_val, epochs=100, batch_size=16)
+    history = model.train(X_train, y_train, X_val, y_val, epochs=200, batch_size=16)
     model.save_model(MODEL_PATH)
     
     print(f"Training completed. Model saved as {MODEL_PATH}")
@@ -293,7 +317,6 @@ def main():
     plot_training_history(history)
     print("Training history plot saved as 'training_history.png'")
     
-    # Confusion matrix
     y_pred = model.model.predict(X_val)
     y_pred_classes = np.argmax(y_pred, axis=1)
     cm = confusion_matrix(y_val, y_pred_classes)
@@ -305,6 +328,13 @@ def main():
     plt.savefig('confusion_matrix.png')
     plt.close()
     print("Confusion matrix saved as 'confusion_matrix.png'")
+    
+    per_class_acc = np.diag(cm) / np.sum(cm, axis=1)
+    print("Per-class accuracy:")
+    for i, acc in enumerate(per_class_acc):
+        if np.isnan(acc):
+            acc = 0.0
+        print(f"Class {CLASSES[i]}: {acc:.4f}")
 
 if __name__ == "__main__":
     main()
