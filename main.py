@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
-from spec_augment import SpecAugment
+from spec_augument import SpecAugment
 
 SAMPLE_RATE = 44100
 DURATION = 0.15  # Increased duration
