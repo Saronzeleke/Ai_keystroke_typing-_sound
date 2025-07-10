@@ -6,7 +6,7 @@ import random
 
 # Parameters
 SAMPLE_RATE = 44100
-DURATION = 0.2
+DURATION = 0.1
 ORIGINAL_SAMPLES_PER_CLASS = 50
 TARGET_SAMPLES_PER_CLASS = 200
 DATA_DIR = "./training_data"  # Original data folder
