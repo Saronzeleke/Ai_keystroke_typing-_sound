@@ -246,6 +246,7 @@ def prepare_training_data(data_dir):
             imbalanced_classes.append((label, count))
     
     if imbalanced:
+        
         print("Data imbalance detected. Imbalanced classes:", imbalanced_classes)
         print("Balancing dataset...")
         target_samples = max(max_samples, min_samples_threshold)
