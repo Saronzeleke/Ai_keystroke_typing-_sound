@@ -17,7 +17,7 @@ import seaborn as sns
 from spec_augument import SpecAugment
 
 SAMPLE_RATE = 44100
-DURATION = 0.15  # Increased duration
+DURATION = 0.1 # Increased duration
 N_MELS = 256     # More mel bands
 FFT_WINDOW = 1024
 HOP_LENGTH = 256 # Finer temporal resolution
