@@ -24,7 +24,7 @@ HOP_LENGTH = 256
 CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ["space", "enter", "noise"]
 NUM_CLASSES = len(CLASSES)
 EXPECTED_INPUT_SHAPE = (N_MELS + 40, 173, 1)
-TRAINING_DATA_DIR = "./training_data2"
+TRAINING_DATA_DIR =r"C:\Users\admin\Ai_keystroke_typing-_sound\training_data2"
 MODEL_PATH = "keystroke_model.keras"
 
 class AudioPreprocessor:
