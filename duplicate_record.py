@@ -32,6 +32,7 @@ def merge_wav_datasets(dataset1_path, dataset2_path, output_path):
 # Example usage
 dataset1 =r'C:\Users\admin\Ai_keystroke_typing-_sound\training_data'         
 dataset2 =r'C:\Users\admin\Ai_keystroke_typing-_sound\training_data2'         
-output_folder = 'path/to/merged_wav'  # e.g. 'merged_keystrokes/'
+output_folder = r'C:\Users\admin\Ai_keystroke_typing-_sound\merged_wav'
+
 
 merge_wav_datasets(dataset1, dataset2, output_folder)
