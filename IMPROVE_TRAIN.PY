@@ -175,7 +175,7 @@ class KeystrokeCNN:
                       metrics=['accuracy'])
         return model
 
-    def train(self, X_train, y_train, X_val, y_val, epochs=100, batch_size=8):
+    def train(self, X_train, y_train, X_val, y_val, epochs=200, batch_size=8):
         class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
         class_weights_dict = dict(enumerate(class_weights))
         
@@ -306,7 +306,7 @@ def main():
     
     print("Training model...")
     model = KeystrokeCNN(input_shape=EXPECTED_INPUT_SHAPE)
-    history = model.train(X_train, y_train, X_val, y_val, epochs=100, batch_size=8)
+    history = model.train(X_train, y_train, X_val, y_val, epochs=200, batch_size=16)
     model.save_model(MODEL_PATH)
     
     print(f"Training completed. Model saved as {MODEL_PATH}")
