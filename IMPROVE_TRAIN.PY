@@ -18,9 +18,10 @@ from spec_augument import SpecAugment
 
 SAMPLE_RATE = 44100
 DURATION = 0.2
-N_MELS = 256
-FFT_WINDOW = 2048
-HOP_LENGTH = 256
+N_MELS = 128
+FFT_WINDOW = 1024
+HOP_LENGTH = 128
+EXPECTED_INPUT_SHAPE = (N_MELS + 20, 86, 1)  # e.g., (148, 86, 1)
 CLASSES = [str(i) for i in range(10)] + [chr(i) for i in range(97, 123)] + ["space", "enter", "noise"]
 NUM_CLASSES = len(CLASSES)
 EXPECTED_INPUT_SHAPE = (N_MELS + 40, 173, 1)
