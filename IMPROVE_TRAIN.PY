@@ -99,7 +99,7 @@ class AudioPreprocessor:
                 y=audio, sr=sr, n_mels=n_mels, n_fft=FFT_WINDOW, hop_length=HOP_LENGTH
             )
             S_dB = librosa.power_to_db(S, ref=np.max)
-            mfcc = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=40, n_fft=FFT_WINDOW, hop_length=HOP_LENGTH)
+            mfcc = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=20, n_fft=FFT_WINDOW, hop_length=HOP_LENGTH)
             S_dB = (S_dB - np.mean(S_dB)) / (np.std(S_dB) + 1e-10)
             mfcc = (mfcc - np.mean(mfcc)) / (np.std(mfcc) + 1e-10)
             combined = np.concatenate((S_dB, mfcc), axis=0)
