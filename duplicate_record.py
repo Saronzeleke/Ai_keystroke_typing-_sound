@@ -30,7 +30,7 @@ def merge_wav_datasets(dataset1_path, dataset2_path, output_path):
     print(f"\n✅ Merged all .wav files into '{output_path}' successfully!")
 
 # Example usage
-dataset1 = 'path/to/dataset1'         # e.g. 'keystrokes_100/'
+dataset1 =r'C:\Users\admin\Ai_keystroke_typing-_sound\training_data'         # e.g. 'keystrokes_100/'
 dataset2 = 'path/to/dataset2'         # e.g. 'keystrokes_50/'
 output_folder = 'path/to/merged_wav'  # e.g. 'merged_keystrokes/'
 
